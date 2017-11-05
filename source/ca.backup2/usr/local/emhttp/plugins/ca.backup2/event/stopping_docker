@@ -1,0 +1,24 @@
+#!/bin/bash
+
+
+if [[ -e /tmp/ca.backup2/tempFiles/backupInProgress ]]
+then
+  logger "Community Applications Backup of Appdata in progress... Killing Process"
+  PID=`cat /tmp/ca.backup2/tempFiles/backupInProgress`
+  logger "Terminating $PID"
+  kill $PID
+fi
+
+if [[ -e /tmp/ca.backup2/tempFiles/restoreInProgress ]]
+then
+  logger "Community Applications Restore of Appdata in progress... Killing Process"
+  PID=`cat /tmp/ca.backup2/tempFiles/restoreInProgress`
+  logger "Terminating $PID"
+  kill $PID
+
+fi
+/usr/local/emhttp/plugins/ca.backup2/scripts/killRsync.php
+rm -f /tmp/ca.backup2/tempFiles/restoreInProgress
+rm -f /tmp/ca.backup2/tempFiles/backupInProgress
+rm -f /var/lib/docker/unraid/ca.backup2.datastore/appdata_backup.log
+rm -f /tmp/community.applications/tempFiles/appdata/inprogress

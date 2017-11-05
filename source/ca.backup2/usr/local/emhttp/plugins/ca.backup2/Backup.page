@@ -1,0 +1,709 @@
+Menu="BackupMain:1"
+Title="Backup / Settings"
+---
+<?
+###############################################################
+#                                                             #
+# Community Applications copyright 2015-2017, Andrew Zawadzki #
+#                                                             #
+###############################################################
+require_once("/usr/local/emhttp/plugins/ca.backup2/include/caCredits.php");
+require_once("/usr/local/emhttp/plugins/dynamix.docker.manager/include/DockerClient.php");
+
+function logger($string) {
+  shell_exec("logger 'CA Backup: $string'");
+}
+
+function searchArray($array,$key,$value) {
+  if ( function_exists("array_column") && function_exists("array_search") ) {   # faster to use built in if it works
+    $result = array_search($value, array_column($array, $key));   
+  } else {
+    $result = false;
+    for ($i = 0; $i <= max(array_keys($array)); $i++) {
+      if ( $array[$i][$key] == $value ) {
+        $result = $i;
+        break;
+      }
+    }
+  }
+  return $result;
+}
+
+$v1Installed = (is_dir("/usr/local/emhttp/plugins/ca.backup")) ? "yes" : "no";
+
+if ( ! function_exists('my_parse_ini_file') ) {
+  function my_parse_ini_file($file,$mode=false,$scanner_mode=INI_SCANNER_NORMAL) {
+    return parse_ini_string(preg_replace('/^#.*\\n/m', "", @file_get_contents($file)),$mode,$scanner_mode);
+  }
+}
+
+if ( ! function_exists('my_parse_ini_string') ) {
+  function my_parse_ini_string($string, $mode=false,$scanner_mode=INI_SCANNER_NORMAL) {
+    return parse_ini_string(preg_replace('/^#.*\\n/m', "", $string),$mode,$scanner_mode);
+  }
+}
+
+$plugin = "ca.backup2";
+
+$installedVersion = exec("/usr/local/emhttp/plugins/dynamix.plugin.manager/scripts/plugin version /var/log/plugins/ca.backup2.plg");
+if ( is_file("/tmp/plugins/ca.backup2.plg") ) {
+  $upgradeVersion = exec("/usr/local/emhttp/plugins/dynamix.plugin.manager/scripts/plugin version /tmp/plugins/ca.backup2.plg");
+} else {
+  $upgradeVersion = "0";
+}
+if ( $installedVersion < $upgradeVersion ) {
+  $upgradeAvailable = "true";
+}
+
+$unRaidVersion = parse_ini_file("/etc/unraid-version");
+
+if ( is_file("/var/log/plugins/ca.update.applications.plg") ) {
+  $caUpdateInstalled = "true";
+}
+
+$dockerRunning = is_dir("/var/lib/docker/tmp") ? "true" : "false";
+
+$backupOptions = json_decode(@file_get_contents("/boot/config/plugins/ca.backup2/BackupOptions.json"),true);
+if ( ! isset($backupOptions['cronSetting']) ) {  $backupOptions['cronSetting'] = "disabled"; }
+if ( ! isset($backupOptions['cronDay']) )     {  $backupOptions['cronDay'] = 1; }
+if ( ! isset($backupOptions['cronMonth']) )   {  $backupOptions['cronMonth'] = 2; }
+if ( ! isset($backupOptions['cronHour']) )    {  $backupOptions['cronHour'] = 3; }
+if ( ! isset($backupOptions['cronMinute']) )  {  $backupOptions['cronMinute'] = 0; }
+if ( ! isset($backupOptions['dockerIMG']) )   {  $backupOptions['dockerIMG'] = "exclude"; }
+if ( ! isset($backupOptions['destinationShare']) ) { $backupOptions['destinationShare'] = "/mnt/user/CommunityApplicationsAppdataBackup"; }
+if ( ! isset($backupOptions['notification']) ) {  $backupOptions['notification'] = "errors"; }
+if ( ! isset($backupOptions['deleteOldBackup']) ) { $backupOptions['deleteOldBackup'] = "1"; }
+if ( ! isset($backupOptions['updateApps']) ) { $backupOptions['updateApps'] = "no"; }
+if ( ! isset($backupOptions['dockerStopDelay']) ) { $backupOptions['dockerStopDelay'] = 10; }
+if ( ! isset($backupOptions['compression']) ) { $backupOptions['compression'] = 'yes'; }
+if ( ! isset($backupOptions['verify']) ) { $backupOptions['verify'] = "no"; }
+
+# fix destinationShare for compatibility with initial release
+
+$vars = my_parse_ini_file("/var/local/emhttp/var.ini");
+$unRaidVersion = $var['version'];
+
+$destinationShareList = array();
+$udList = array();
+$sharesList = array();
+$disksList = array();
+$userSharesAllowed = version_compare($unRaidVersion,"6.2.0-rc3",">=") || version_compare($unRaidVersion,"6.2",">=");
+
+$disksDisallowed = $userSharesAllowed ? array(".","..","user0","disks","cache") : array(".","..","user","user0","disks","cache");
+
+if ( is_dir("/mnt/user") )  { $destinationShareList = array_diff(scandir("/mnt/user"),array(".","..")); }
+if ( is_dir("/mnt/disks") ) { $udList = array_diff(scandir("/mnt/disks"),array(".","..")); }
+if ( is_dir("/mnt/cache") ) { $sharesList = array_diff(scandir("/mnt/cache"),array(".","..")); }
+if ( is_dir("/mnt/") )      { $disksList = array_diff(scandir("/mnt/"),$disksDisallowed); }
+natsort($disksList);
+
+$sourceShares = "<option value=''>Select A Share</option>";
+
+# add in support for user shares as source for 6.2-rc3 +
+
+if ( $userSharesAllowed ) {
+  foreach ( $destinationShareList as $addShare ) {
+    if ( is_file("/mnt/user/$addShare") ) {
+      continue;
+    }
+    $selected = "";
+    $flag = false;
+    $basePath = "/mnt/cache/";
+    $shareComment = "(cache-only share)";
+    if ( is_dir("/mnt/cache/$addShare") ) {
+      if ( is_dir("/mnt/user0/$addShare") ) {
+        $dirContents = array_diff(scandir("/mnt/user0/$addShare"),array(".",".."));
+        if ( ! empty($dirContents) ) {
+          $basePath = "/mnt/user/";
+          $shareComment = "(user share)";
+          $flag = true;
+        }
+      }
+    } else {
+      $basePath = "/mnt/user/";
+      $shareComment = "(user share)";
+      $flag = true;
+    }
+    if ( is_file("/boot/config/shares/$addShare.cfg") ) {
+      $shareCfg = my_parse_ini_file("/boot/config/shares/$addShare.cfg");
+      if ( $shareCfg['shareUseCache'] == "yes" ) {
+        $basePath = "/mnt/user/";
+        $shareComment = "(user share)";
+        $flag = true;
+      }
+    }
+    
+    if ( $backupOptions['source'] == "$basePath$addShare" ) {
+      $selected = "selected";
+    }
+    if ( $flag ) {
+      $userShares .="<option value='$basePath$addShare' $selected>$addShare $shareComment</option>";
+    } else {
+      $cacheShares .= "<option value='$basePath$addShare' $selected>$addShare $shareComment</option>";
+    }
+  }
+  $sourceShares .= $cacheShares.$userShares;
+} else {
+  logger("Searching for valid source shares");  
+  # this section is for non user shares allowed (ie: 6.1)
+  
+  foreach ($sharesList as $addShare) {
+    $selected = "";
+    if ( ! is_dir("/mnt/cache/$addShare") ) {
+      continue;
+    }
+    logger("Found share $addShare on cache drive");
+    if ( is_dir("/mnt/user0/$addShare") ) {
+      $dirContents = array_diff(scandir("/mnt/user0/$addShare"),array(".",".."));
+      if ( ! empty($dirContents) ) {
+        logger("Share $addShare is not exclusively stored on cache drive.  Skipping as potential source");
+        continue;
+      }
+    }
+    if ( $backupOptions['source'] == "/mnt/cache/$addShare" ) {
+      $selected = "selected";
+    }    
+    $sourceShares .= "<option value='/mnt/cache/$addShare' $selected>$addShare (cache only share)</option>";
+    $flag = true;
+  }
+  if ( ! $flag ) {
+    logger("No shares found exclusively stored on the cache drive");
+  }
+}
+
+foreach ($udList as $udShare) {
+  $selected = "";
+  if ( ! is_dir("/mnt/disks/$udShare") ) {
+    continue;
+  }
+  if ( $backupOptions['source'] == "/mnt/disks/$udShare" ) {
+    $selected = "selected";
+  }
+  $sourceShares .= "<option value='/mnt/disks/$udShare' $selected>$udShare (via Unassigned Devices)</option>";
+}
+
+for ( $minute = 0; $minute < 60; $minute++ ) {
+  $cronMinute .= "<option value='$minute'>$minute</option>";
+}
+
+for ( $hour = 0; $hour < 24; $hour++ ) {
+  if ( $hour > 11 ) { $suffix = "PM"; $easyHour = $hour - 12; } else { $suffix = "AM"; $easyHour = $hour; }
+  if ( $easyHour == 0 ) { $easyHour = 12; }
+
+  $cronHour .= "<option value='$hour'>$easyHour$suffix</option>";
+}
+
+if ( $dockerRunning == "true" ) {
+  $DockerTemplates = new DockerTemplates();
+  $info = $DockerTemplates->getAllInfo();
+  $DockerClient = new DockerClient();
+  $moreInfo = $DockerClient->getDockerContainers();
+
+  $dockerSettings = "<table><tr>";
+  $containerNames = array_keys($info);
+
+  foreach ($containerNames as $container) {
+    $class = $backupOptions['dontStop'][$container] ? "unRaidDockerButton" : null;
+    $index = searchArray($moreInfo,"Name",$container);
+    $repository = ($index === false) ? "Unknown" : $moreInfo[$index]['Image'];
+    $dockerSettings .= "<td width:25%;>";
+    $dockerSettings .= "<img src='".$info[$container]['icon']."' width=48px; height=48px;></td>";
+    $dockerSettings .= "<td><strong>$container</strong><br>$repository</td>";
+    $dockerSettings .= "<td><div class='ca-switch-button-background skipDocker' style='width:25px; height:11px;'onclick='toggleDockerStop(this);'>";
+    $dockerSettings .= "<div class='$class ca-switch-button-button' style='width:12px; height:11px;' data-docker='$container'>";
+    $dockerSettings .= "</div></div><br>";
+    $span = $class ? "<span><font color='purple'>Don't Stop</font></span>" : "<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+    $dockerSettings .= "$span</td><td>";
+    if ( $column == 2 ) {
+      $dockerSettings .= "</td></tr><tr>";
+      $column = 0;
+    } else {
+      ++$column;
+      $dockerSettings .= "</td><td>&nbsp;</td><td style='border-right:solid thin;'>&nbsp;</td> <td>&nbsp;</td><td>&nbsp;</td> <td>&nbsp;</td> <td>&nbsp;</td>   ";
+    }
+  }
+  $dockerSettings .= "</table>";
+} else {
+  $dockerSettings = "<table><tr><td><center><font size='3'>Docker Not Enabled</font></center></td></tr></table>";
+}
+?>
+<script src="/webGui/javascript/jquery.filetree.js"></script>
+<script>
+var URL = "/plugins/<?=$plugin?>/include/backupExec.php";
+var appliedChanges = false;
+
+$(function() {
+	if ( "<?=$v1Installed?>" == "yes" ) {
+		$("#v1Installed").show();
+	}
+  if ( "<?=$upgradeAvailable?>" == "true" ) {
+    $("#upgradeAvailable").show();
+  }
+  <?if (! $tabbed):?>
+  $(".tabbedOnly").hide();
+  <?endif;?>
+  myAlert("Appdata Backup","When a Backup is running (<em>either manually or a scheduled backup</em>), your docker applications will be <b><font color='red'>stopped</font></b> and then <b><font color='red'>restarted</font></b> at the conclusion of the backup","","",false,"",true,"warning");
+  
+  $("#source").val("<?=$backupOptions['source']?>");
+  $("#fasterRsync").val("<?=$backupOptions['fasterRsync']?>");
+  $("#deleteOldBackup").val("<?=$backupOptions['deleteOldBackup']?>");
+  $("#destinationShare").val("<?=$backupOptions['destinationShare']?>");
+  $("#cronSetting").val("<?=$backupOptions['cronSetting']?>");
+  $("#cronDay").val("<?=$backupOptions['cronDay']?>");
+  $("#cronMonth").val("<?=$backupOptions['cronMonth']?>");
+  $("#cronHour").val("<?=$backupOptions['cronHour']?>");
+  $("#cronMinute").val("<?=$backupOptions['cronMinute']?>");
+  $("#cronCustom").val("<?=$backupOptions['cronCustom']?>");
+  $("#runRsync").val("<?=$backupOptions['runRsync']?>");
+  $("#dockerIMG").val("<?=$backupOptions['dockerIMG']?>");
+  $("#startScript").val("<?=$backupOptions['startScript']?>");
+  $("#stopScript").val("<?=$backupOptions['stopScript']?>");
+  $("#notification").val("<?=$backupOptions['notification']?>");
+  $("#logBackup").val("<?=$backupOptions['logBackup']?>");
+  $("#backupFlash").val("<?=$backupOptions['backupFlash']?>");
+  $("#usbDestination").val("<?=$backupOptions['usbDestination']?>");
+  $("#backupXML").val("<?=$backupOptions['backupXML']?>");
+  $("#xmlDestination").val("<?=$backupOptions['xmlDestination']?>");
+  $("#updateApps").val("<?=$backupOptions['updateApps']?>");
+  $("#dockerStopDelay").val("<?=$backupOptions['dockerStopDelay']?>");
+	$("#compression").val("<?=$backupOptions['compression']?>");
+	$("#verify").val("<?=$backupOptions['verify']?>");
+  
+  if ( "<?=$caUpdateInstalled?>" != "true" ) {
+    $("#updateApps").prop("disabled",true);
+  }
+  
+  $("#destinationShare, #startScript, #stopScript, #usbDestination, #xmlDestination").fileTreeAttach();
+$('#source').fileTreeAttach();
+  var source = $("#source").val();
+  $("#excludedFoldersList").fileTree({
+    root: source,
+    multiSelect: true,
+    filter: "HIDE_FILES_FILTER",
+    folderEvent: "nothing"
+  });
+  validateOptions(true);
+});
+
+function myAlert(description,textdescription,textimage,imagesize, outsideClick, showCancel, showConfirm, alertType) {
+  if ( !outsideClick ) outsideClick = false;
+  if ( !showCancel )   showCancel = false;
+  if ( !showConfirm )  showConfirm = false;
+  if ( imagesize == "" ) { imagesize = "80x80"; }
+   
+  swal({
+    title: description,
+    text: textdescription,
+    imageUrl: textimage,
+    imageSize: imagesize,
+    allowOutsideClick: outsideClick,
+    showConfirmButton: showConfirm,
+    showCancelButton: showCancel,
+    type: alertType,
+    html: true
+  });
+}
+
+function getSettings() {
+  var settings = new Array();
+  
+  $(".setting").each(function() {
+    var value = $(this).val();
+    if ( (typeof value != "string" ) ) {
+      var value = "something really went wrong here";
+    }
+    if ( (value == null) ) {
+      value = " ";
+    }
+    value = value.trim();
+    $(this).val(value);
+    if ( ! this.id ) {
+      var ID = 'unknownID';
+    } else {
+      var ID = this.id;
+    }
+    var newSetting = new Array(ID,value);
+    
+    settings.push(newSetting);
+  });
+  return settings;
+}
+  
+function changeSource() {
+  $('#excludedFoldersList').html(" ");
+  var source = $("#source").val();
+  $("#excludedFoldersList").fileTree({
+    root: source,
+    multiSelect: true,
+    filter: "HIDE_FILES_FILTER",
+    folderEvent: "nothing"
+    });
+  validateOptions();
+}
+
+function validateOptions(initialization) {
+  if (initialization != true ) {
+    appliedChanges = true;
+  }
+  var settings = getSettings();
+  
+  var cronSetting = $("#cronSetting").val();
+  switch (cronSetting) {
+    case 'daily':
+      $("#cronDay,#cronMonth,#cronCustom").prop("disabled",true);
+      $("#cronHour,#cronMinute").prop("disabled",false);
+      break;
+    case 'weekly':
+      $("#cronMonth,#cronCustom").prop("disabled",true);
+      $("#cronDay,#cronHour,#cronMinute").prop("disabled",false);
+      break;
+    case 'monthly':
+      $("#cronCustom,#cronDay").prop("disabled",true);
+      $("#cronMonth,#cronHour,#cronMinute").prop("disabled",false);
+      break;
+    case 'custom':
+      $("#cronCustom").prop("disabled",false);
+      $("#cronDay,#cronMonth,#cronHour,#cronMinute").prop("disabled",true);
+      break;
+    case 'disabled':
+      $("#cronCusom,#cronDay,#cronMonth,#cronHour,#cronMinute").prop("disabled",true);
+      break;
+  }
+  
+  var destinationShare = $("#destinationShare").val();
+  var deleteOldBackup = $("#deleteOldBackup").val();
+  
+  if ( deleteOldBackup == 0 ) {
+    $("#deleteOldBackup").val("");
+  }
+
+  var excludeButton = "<input type='button' id='excludedFolders' name='excludedFolders' value='Add' data-pickfilter='HIDE_FILES_FILTER' data-pickmultiselect='true' data-pickroot='/mnt/user' data-pickfolders='true'>";
+  
+  $("#destinationShare").val(destinationShare);
+  $('#excludedSpan').html(" ");
+  $('#excludedSpan').html(excludeButton);
+  $('#excludedFolders').fileTreeAttach();
+  
+  $.post(URL,{action:'validateBackupOptions',settings:settings}, function (data) {
+    if (data) {
+      data = data.trim();
+      if ( data == "NONE" ) {
+        if ( appliedChanges ) {
+          $("#Apply").prop("disabled",false);
+          $("#Backup").prop("disabled",true);
+        } else {
+          $("#errors").html("false");
+          $("#Apply").prop("disabled",true);
+          if ( $('#Backup').attr('data-running') == 'true' ) {
+            $("#Backup").prop("disabled",true);
+          }
+        }          
+        $("#errors").html("");
+      } else {
+        $("#errors").html(data);
+        $("#Apply,#Backup,#restore").prop("disabled",true);
+      }
+    }
+  });
+}  
+
+function getDontStop() {
+  var dontStop = new Array();
+  $(".unRaidDockerButton").each(function() {
+    var container = $(this).data("docker");
+    dontStop.push(container);
+  });
+  return dontStop;
+}
+  
+function apply() {
+  var settings = getSettings();
+  var dontStop = getDontStop();
+  var source = $("#source").val();
+  var destinationShare = $("#destinationShare").val();
+  var excluded = $("#excluded").val();
+  var usbDestination = $("#usbDestination").val();
+  var xmlDestination = $("#xmlDestination").val();
+  excluded = excluded.trim();
+
+  var popUpText = "Warning: All files within <font color='red'>" + destinationShare + "</font> ";
+  if ( excluded ) {
+    popUpText = popUpText.concat("(excluding the " + excluded + " folders)");
+  } else {
+    popUpText = popUpText.concat("(including all folders)");
+  }
+  popUpText = popUpText.concat(" will be overwritten / deleted during a backup process!");
+  swal({
+    title: "Are You Sure?",
+    text: popUpText,
+    html: true,
+    type: "warning",
+    showCancelButton: true,
+    closeOnConfirm: true
+    },
+    function() {
+      appliedChanges = false;
+
+      $.post(URL,{action:'applyBackupOptions',settings:settings,dontStop:dontStop});
+
+      validateOptions(true);
+      changeRestoreOptions();
+    });
+}  
+function setExcluded() {
+				$el = $( "#excludedFoldersList input:checked" );
+
+				if( $el.length === 0 )
+				{
+					checked = "";
+				}
+				else {
+					var checked = $el
+						.map(function() {
+							return $(this).parent().find('a:first').attr("rel");
+						})
+					.get()
+					.join(',');
+				}
+    $("#excluded").val(checked);
+    validateOptions();
+ }
+
+function backupNow() {
+  var source = $('#source').val();
+  var destination = $("#destinationShare").val();;
+  
+  swal({
+    title: "Backup Appdata",
+    text: "This will backup your appdata folder from <font color='red'><em>"+source+"</em></font> to <font color='red'><em>"+destination,
+    showCancelButton: true,
+    closeOnConfirm: true,
+    type: "warning",
+    html: true
+    },
+    function() {
+      $.post(URL,{action:'backupNow'});
+    });
+}
+
+function abort() {
+  swal({
+    title: "Are you sure?",
+    text: "This will abort the current backup / restore operation and restart your applications",
+    showCancelButton: true,
+    closeOnConfirm: true
+    },
+    function() {
+      $.post(URL,{action:'abortBackup'});
+    });
+}
+function showCredits() {
+  myAlert("CA Appdata Backup/Restore","<?=$caCredits?>","/plugins/<?=$plugin?>/images/ca.backup2.png","96x96", true, false, true);
+}
+
+function showAdvanced() {
+  $("#advancedSettings").toggle();
+  $("#showAdvanced").toggleClass("advancedHidden");
+  if ( $("#showAdvanced").hasClass("advancedHidden") ) {
+    $("#showAdvanced").html("<font color='purple'>Show Advanced Settings</font>");
+  } else {
+    $("#showAdvanced").html("<font color='purple'>Hide Advanced Settings</font>");
+  }
+}
+
+function toggleDockerStop(el) {
+  $(el).find("div").toggleClass("unRaidDockerButton");
+    if ( $(el).find("div").hasClass("unRaidDockerButton") ) {
+      $(el).parent().find("span").html("<center><font color='purple'>Don't Stop</font><center>");
+    } else {
+      $(el).parent().find("span").html("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+    }
+  validateOptions();
+}
+  
+</script>
+<link type="text/css" rel="stylesheet" href="/plugins/ca.backup2/styles/switchbutton.css">
+<style>
+.unRaidDockerButton { left: 11px; }
+.fileTree{width:305px;max-height:150px;overflow:scroll;position:absolute;z-index:100;display:none;}
+</style>
+<link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.filetree.css">
+<div id='upgradeAvailable' style='display:none'><center> <font color='red'>An update to CA Appdata Backup / Restore is Available. Click <a href='/Plugins'>HERE</a> to install the update</center></font></div>
+<div id='v1Installed' style='display:none'><center><font color='red'>It is recommended to uninstall CA Appdata Backup / Restore (version 1)</font></center></div>
+
+> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+> <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>
+
+<font color='red'><center><span id='errors'></span></font><span id='error1'></span></center>
+
+<div style='width:75%;align:center;margin:auto'>
+<font color='red'>Note:</font> If you are attempting to restore your appdata, then you shouldn't need to set any of the following settings if they appear correctly under the restore tab.<br><br><br>
+
+<table>
+
+<tr>
+  <td><b>Appdata Share (Source):</b><br>(If your appData share is not listed, consider installing this <a href='http://lime-technology.com/forum/index.php?topic=49992.0' target='_blank'>plugin</a> in conjunction with <a href='http://lime-technology.com/forum/index.php?topic=50416.msg484239#msg484239' target='_blank'>this</a></td>
+  <td><input type='text' class='setting' id="source" name="shareFolder" value="/mnt/" data-pickfilter="HIDE_FILES_FILTER" data-pickroot="/mnt/" data-pickfolders="true" onchange='changeSource();'></td>
+</tr>
+<tr>
+  <td><b>Destination Share:</b><br>If using an Unassigned Devices mount as save to Disk #,<br> manually type in the destination folder here</td>
+  <td><input type='text' class='setting' id="destinationShare" name="shareFolder"  data-pickfilter="HIDE_FILES_FILTER" data-pickfolders="true" onchange='validateOptions();'></td>
+</tr>
+<tr>
+  <td><b>Excluded Folders:</b></td>
+  <td><input type='text' class='setting' id='excluded' value='<?=$backupOptions['excluded']?>'></span></td>
+  <td><center><b>Excluded Folder Browser</b><br><input type='button' value='Exclude Selected' onclick='setExcluded();'><br></center><div id='excludedFoldersList' style='width:305px;max-height:150px;overflow:scroll;position:absolute;z-index:100;'></div><br><center></td>
+ </tr>
+<tr>
+<tr>
+	<td><b>Use Compression?</b></td>
+	<td><select class='setting' id='compression' onchange='validateOptions();'>
+		<option value='no'>No</option>
+		<option value='yes'>Yes</option>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td><b>Verify Backups?</b></td>
+	<td><select class='setting' id='verify' onchange='validateOptions();'>
+		<option value='no'>No</option>
+		<option value='yes'>Yes</option>
+	</select>
+	</td>
+</tr>
+<tr>
+  <td><b>USB Backup Destination:<b><br>If no destination entered, flash drive will not be backed up</td>
+  <td><input type='text' class='setting' id="usbDestination" name="usb destination" value="" placeholder='Click To Select A Destination' data-pickfilter="HIDE_FILES_FILTER" data-pickroot="/mnt/" data-pickfolders="true" onchange='validateOptions();'></td>
+</tr>
+<tr>
+  <td><b>libvirt.img Destination:<b><br>If no destination entered, libvirt.img will not be backed up</td>
+  <td><input type='text' class='setting' id="xmlDestination" name="xml destination" value="" placeholder='Click To Select A Destination' data-pickfilter="HIDE_FILES_FILTER" data-pickroot="/mnt/" data-pickfolders="true" onchange='validateOptions();'></td>
+</tr>
+<tr>
+  <td><b>Notification Settings:</b></td>
+  <td><select class='setting' id='notification' onchange='validateOptions();'>
+    <option value='disabled'>Disabled</option>
+    <option value='always'>Start And Stop</option>
+    <option value='completion'>Completion Only</option>
+    <option value='errors'>Errors Only</option>
+    </select>
+  </td>
+</tr>
+<tr>
+  <td><b>Path To Custom Stop Script:</b></td>
+  <td><input onchange='validateOptions();' class='setting' id='stopScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+</tr>
+<tr>
+  <td><b>Path To Custom Start Script:</b></td>
+  <td><input onchange='validateOptions();' class='setting' id='startScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+</tr>
+<tr>
+  <td><b>Update Applications On Restart?</b><br><font size='0'>This option requires CA Auto Update Applications to be installed</font></td>
+  <td><select class='setting' id='updateApps' onchange='validateOptions();'>
+    <option value='no'>No</option>
+    <option value='yes'>Yes</option>
+    </select>
+  </td>
+</tr>
+<tr>
+  <td><b>Time to wait when stopping app before killing:</b></td>
+  <td><input type='number' class='setting narrow' id='dockerStopDelay' onchange='validateOptions();'>
+  </td>
+</tr>
+<tr>
+  <td><b>Delete backups if they are this many days old:</b></td>
+  <td><input class='setting' id='deleteOldBackup' type='number' val='' placeholder='Never Delete' onchange='validateOptions();'></td>
+</tr>
+<tr>
+  <td><b>Scheduled Backup Frequency</b></td>
+  <td><select class='setting' id='cronSetting' onchange='validateOptions();'>
+        <option value='disabled'>Disabled</option>
+        <option value='daily'>Daily</option>
+        <option value='weekly'>Weekly</option>
+        <option value='monthly'>Monthly</option>
+        <option value='custom'>Custom</option>
+      </select>
+  </td>
+</tr>
+<tr>
+  <td><b>Day of Week:</b></td>
+  <td><select class='setting' id='cronDay' onchange='validateOptions();'>
+        <option value='0'>Sunday</option>
+        <option value='1'>Monday</option>
+        <option value='2'>Tuesday</option>
+        <option value='3'>Wednesday</option>
+        <option value='4'>Thursday</option>
+        <option value='5'>Friday</option>
+        <option value='6'>Saturday</option>
+      </select>
+  </td>
+</tr>
+<tr>
+  <td><b>Day of Month:</b></td>
+  <td><select class='setting' id='cronMonth' onchange='validateOptions();'>
+        <option value='1'>1st</option>
+        <option value='2'>2nd</option>
+        <option value='3'>3rd</option>
+        <option value='4'>4th</option>
+        <option value='5'>5th</option>
+        <option value='6'>6th</option>
+        <option value='7'>7th</option>
+        <option value='8'>8th</option>
+        <option value='9'>9th</option>
+        <option value='10'>10th</option>
+        <option value='11'>11th</option>
+        <option value='12'>12th</option>
+        <option value='13'>13th</option>
+        <option value='14'>14th</option>
+        <option value='15'>15th</option>
+        <option value='16'>16th</option>
+        <option value='17'>17th</option>
+        <option value='18'>18th</option>
+        <option value='19'>19th</option>
+        <option value='20'>20th</option>
+        <option value='21'>21st</option>
+        <option value='22'>22nd</option>
+        <option value='23'>23rd</option>
+        <option value='24'>24th</option>
+        <option value='25'>25th</option>
+        <option value='26'>26th</option>
+        <option value='27'>27th</option>
+        <option value='28'>28th</option>
+        <option value='29'>29th</option>
+        <option value='30'>30th</option>
+        <option value='31'>31st</option>
+      </select>
+  </td>
+</tr>
+<tr>
+  <td><b>Hour:</b></td>
+  <td><select class='setting' id='cronHour' onchange='validateOptions();'><?=$cronHour?></select></td>
+</tr>
+<tr>
+  <td><b>Minute:</b></td>
+  <td><select class='setting' id='cronMinute' onchange='validateOptions();'><?=$cronMinute?></select></td>
+</tr>
+<tr>
+  <td><b>Custom Cron Entry:</b></td>
+  <td><input type='text' class='setting' id='cronCustom' onchange='validateOptions();'></input></td>
+</tr>
+</table>
+<center><a onclick='showAdvanced();' style='cursor:pointer'><span id='showAdvanced' class='advancedHidden'><font color='purple'>Show Advanced Settings</font></span></a></center>
+<br>
+<span id='advancedSettings' style='display:none'>
+<br>
+<font color='purple' size='2'><b>Select which applications to NOT stop during a backup</b></font><br>
+Note that it is recommended to also exclude from the backup any associated appdata shares from the backup set to ensure that the backup / restore will not fail due to open files, etc</font><br>
+<br><br><br>
+<?=$dockerSettings?>
+</span>
+
+<font size='3' color='red'><b>NOTE: All files</b> within your chosen destinations will be deleted when the backup runs.  Only select a share/folder created <b>SPECIFICALLY<b> for appdata (and USB) backup purposes</font><br>
+
+<input type='button' value='Apply' id='Apply' onclick='apply();'><input type='button' value='Backup Now' id='Backup' onclick='backupNow();'><span class='statusLines'></span>
+</div><br>
+
+<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
+
+> <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>

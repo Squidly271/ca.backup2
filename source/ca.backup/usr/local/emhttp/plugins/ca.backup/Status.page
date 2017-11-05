@@ -1,0 +1,38 @@
+Menu="BackupMain:3"
+Title="Backup / Restore Status"
+---
+
+<script>
+
+var URL = "/plugins/ca.backup/include/backupExec.php";
+
+
+$(function() {
+  setInterval(function() {
+    checkBackup();
+  }, 1000);
+});
+
+function checkBackup() {
+  $.post(URL,{action:'checkBackup'},function(data) {
+    if (data) {
+      $("#backupLines").html(data);
+    }
+  });
+}
+
+</script>
+
+> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+
+<div style='border:1px;border-style:solid;border-color:red;height:250px;overflow:hidden' ><font size='2'>Backup / Restore Status: <span id='backupStatus'></span>
+<br>
+<span id='backupLines'><br><br><br></span></div>
+
+<input type='button' value='Abort' id='abort' onclick='abort();' disabled>
+
+<div class='tabbedOnly'>
+<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<center>For support for this plugin, visit here: <a href="http://lime-technology.com/forum/index.php?topic=53694.0" target="_blank">http://lime-technology.com/forum/index.php?topic=53694.0</a></center>
+
+</div>

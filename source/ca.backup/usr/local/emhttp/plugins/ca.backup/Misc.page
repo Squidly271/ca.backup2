@@ -1,0 +1,112 @@
+Menu="BackupMain:4"
+Title="Miscellaneous"
+---
+
+<script>
+function deleteOldBackup() {
+  $.post(URL,{action:'getBackupShare'},function(data) {
+    if (data) {
+      if ( data == "/mnt/user/" ) {
+        swal({
+          title: "Oops",
+          text: "You must define backup settings before you can use this script",
+          type: "error",
+          showConfirmButton: true,
+          showCancelButton: false
+        });
+      } else {
+        swal({
+          title: "Delete Old Backup Sets?",
+          text: "This will delete all files contained within <strong><font color='red'>"+data+"</font></strong>.  There is no recovery from this and cannot be aborted.  Are you really sure?",
+          showConfirmButton: true,
+          showCancelButton: true,
+          type: 'warning',
+          html: true
+        },function() {
+          $.post(URL,{action:'deleteOldBackupSets'});
+        });
+      }
+    }
+  });
+}
+
+function deleteIncompleteBackup() {
+  $.post(URL,{action:'getBackupShare'},function(data) {
+    if (data) {
+      if ( data == "/mnt/user/" ) {
+        swal({
+          title: "Oops",
+          text: "You must define backup settings before you can use this script",
+          type: "error",
+          showConfirmButton: true,
+          showCancelButton: false
+        });
+      } else {
+        swal({
+          title: "Delete Incomplete Backup Sets?",
+          text: "This will delete incomplete backup sets contained within <strong><font color='red'>"+data+"</font></strong>.  There is no recovery from this and cannot be aborted.  Are you really sure?",
+          showConfirmButton: true,
+          showCancelButton: true,
+          type: 'warning',
+          html: true
+        },function() {
+          $.post(URL,{action:'deleteIncompleteBackupSets'});
+        });
+      }
+    }
+  });
+}
+function deleteDatedBackup() {
+  $.post(URL,{action:'getBackupShare'},function(data) {
+    if (data) {
+      if ( data == "/mnt/user/" ) {
+        swal({
+          title: "Oops",
+          text: "You must define backup settings before you can use this script",
+          type: "error",
+          showConfirmButton: true,
+          showCancelButton: false
+        });
+      } else {
+        swal({
+          title: "Delete Old Dated Backup Sets?",
+          text: "This will delete all dated backup sets older than the cutoff time contained within <strong><font color='red'>"+data+"</font></strong>.  There is no recovery from this and cannot be aborted.  Are you really sure?",
+          showConfirmButton: true,
+          showCancelButton: true,
+          type: 'warning',
+          html: true
+        },function() {
+          $.post(URL,{action:'deleteDatedBackupSets'});
+        });
+      }
+    }
+  });
+}
+</script>
+
+> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+
+<table>
+<tr>
+  <td>This script will delete ALL of your old backup sets.  This is useful when transitioning from non-dated backup sets to dated backup sets and vice-versa</td>
+  <td><input class='miscScripts' type='button' value='Delete Old Backups' onclick='deleteOldBackup();' disabled></td>
+  <td><span class='statusLines'></span>
+</tr>
+<tr>
+  <td>This script will delete ALL your old backup sets which generated errors (ie: did not complete successfully)</td>
+  <td><input class='miscScripts' type='button' value='Delete Incomplete Backup Sets' onclick='deleteIncompleteBackup();' disabled></td>
+  <td><span class='statusLines'></span>
+</tr>
+<tr>
+  <td>This script will delete all old backup sets that are older than the cutoff time set as "Delete backups after # of days".  Normally, the backup process itself will delete these old backups.  But, if the backup ends in an error (disk full?), the deletion of old sets is skipped.</td>
+  <td><input class='miscScripts' type='button' value='Delete Old Dated Backup Sets' onclick='deleteDatedBackup();' disabled></td>
+  <td><span class='statusLines'></span>
+</tr>
+</table>
+
+<div class='tabbedOnly'>
+<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<center>For support for this plugin, visit here: <a href="http://lime-technology.com/forum/index.php?topic=53694.0" target="_blank">http://lime-technology.com/forum/index.php?topic=53694.0</a></center>
+
+
+</div>

@@ -1,0 +1,93 @@
+Menu="BackupMain:3"
+Title="Restore Appdata"
+---
+<script>
+var URL = "/plugins/ca.backup2/include/backupExec.php";
+
+$(function() {
+  changeRestoreOptions();
+});
+
+function changeRestoreOptions() {
+  $.post(URL,{action:'restoreSettings'},function(data) {
+    if (data) {
+      $('#restoreScript').html(data);
+    }
+  });  
+}
+
+
+function restoreBackup() {
+
+  var destination = $('#restoreDestination').html();
+  var source = $('#restoreSource').html();
+  
+  if ( $('#availableDates').html() != "Dated Backups Not Enabled" ) {
+    var availableDates = $("#date").val();
+    source = source + "/" + availableDates;
+  } else {
+    var availableDates = "";
+  }
+ 
+
+  swal({
+    title: "Are you sure?",
+    text: "This will restore your appdata folder from <b><em><font color='red'>" + source + "</em></b></font> to <em><b><font color='red'>" + destination,
+    showCancelButton: true,
+    html: true,
+    type: "warning",
+    closeOnConfirm: true
+    },
+    function() {
+      $.post(URL,{action:'restoreNow',availableDates:availableDates});
+    });
+}
+
+</script>
+
+> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+
+<font size='3' color='red'>General Procedure On How To Restore Your Appdata</font>
+
+<list>
+<li>Replace your cache drive if necessary</li>
+<li>Recreate your appdata share (and set it to be cache only)
+<li>Recreate your docker.img file if necessary (ideally, this should be performed regardless)</li>
+<li>Select a backup set (if using dated backup sets) and hit 'Restore'</li>
+<li>Sit back and have a coffee</li>
+<li>Ideally restart your server</li>
+<li>Re-add your previously installed docker applications via CA's <b>Previous Apps</b> section.  No adjustment of the templates should be necessary</li>
+</list><br>
+<font color='red'>Note:</font> All files within the destination directory listed below will be deleted and replaced with the files from the backup set.  The destination share will also be automatically adjusted to only store the files on the cache drive.  If the settings below are not correct, then you will need to adjust the settings within the Backup/Settings tab.  <font color='red'><b>Do not add any further apps or do anything with the docker.img file until after the restore is completed.</b></font>
+<br><br><br>
+
+
+
+<table>
+<tr>
+  <td>Source Directory:</td>
+  <td><span id='restoreSource'></span></td>
+</tr>
+<tr>
+  <td>Destination Directory:</td>
+  <td><span id='restoreDestination'></span></td>
+</tr>
+<tr>
+  <td>Select A Backup Set To Restore</td>
+  <td><span id='availableDates'></span></td>
+</tr>
+</table>
+
+<span id='restoreErrors'></span>
+<span id='restoreScript'></span>
+
+
+<input type='button' value='Restore' id='restore' onclick='restoreBackup();'><span class='statusLines'></span>
+
+<br><br>
+
+<div class='tabbedOnly'>
+<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
+
+</div>
