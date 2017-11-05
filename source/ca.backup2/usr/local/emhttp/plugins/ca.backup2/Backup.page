@@ -542,11 +542,11 @@ function toggleDockerStop(el) {
 <table>
 
 <tr>
-  <td><b>Appdata Share (Source):</b><br>(If your appData share is not listed, consider installing this <a href='http://lime-technology.com/forum/index.php?topic=49992.0' target='_blank'>plugin</a> in conjunction with <a href='http://lime-technology.com/forum/index.php?topic=50416.msg484239#msg484239' target='_blank'>this</a></td>
+  <td><b>Appdata Share (Source):</b></td>
   <td><input type='text' class='setting' id="source" name="shareFolder" value="/mnt/" data-pickfilter="HIDE_FILES_FILTER" data-pickroot="/mnt/" data-pickfolders="true" onchange='changeSource();'></td>
 </tr>
 <tr>
-  <td><b>Destination Share:</b><br>If using an Unassigned Devices mount as save to Disk #,<br> manually type in the destination folder here</td>
+  <td><b>Destination Share:</b></td>
   <td><input type='text' class='setting' id="destinationShare" name="shareFolder"  data-pickfilter="HIDE_FILES_FILTER" data-pickfolders="true" onchange='validateOptions();'></td>
 </tr>
 <tr>
@@ -698,7 +698,7 @@ Note that it is recommended to also exclude from the backup any associated appda
 <?=$dockerSettings?>
 </span>
 
-<font size='3' color='red'><b>NOTE: All files</b> within your chosen destinations will be deleted when the backup runs.  Only select a share/folder created <b>SPECIFICALLY<b> for appdata (and USB) backup purposes</font><br>
+<font size='3' color='red'><b>Note:  You should specify a backup share (and subfolders) dedicated to that particular backup.  It is entirely possible for backups to erase any other files contained within the destinations.</font><br>
 
 <input type='button' value='Apply' id='Apply' onclick='apply();'><input type='button' value='Backup Now' id='Backup' onclick='backupNow();'><span class='statusLines'></span>
 </div><br>
