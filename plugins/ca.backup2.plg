@@ -4,7 +4,7 @@
 <!ENTITY author    "Andrew Zawadzki">
 <!ENTITY version   "2017.11.05">
 <!ENTITY md5       "b2415a3b32596c222518bea5e714067b">
-<!ENTITY launch    "Settings/BackupMain">
+<!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/master/plugins/&name;.plg">
