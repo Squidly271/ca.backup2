@@ -3,7 +3,7 @@
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
 <!ENTITY version   "2017.11.05">
-<!ENTITY md5       "214a23fccc8260c7a23fd2a0167587b5">
+<!ENTITY md5       "193bfdc7c09dc67a9c903390d01589e7">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">

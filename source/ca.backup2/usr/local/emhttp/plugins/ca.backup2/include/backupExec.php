@@ -47,7 +47,27 @@ case 'validateBackupOptions':
   if ( $settings['source'] == "" ) {
     $errors .= "Source Must Be Specified<br>";
   }
-  
+	$testSource = $settings['source'];
+	$availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
+	foreach ($availableDisks as $disk) {
+		$testSource = str_replace("/mnt/".$disk['name']."/","",$testSource);
+	}
+  $testSource = str_replace("/mnt/user0/","",$testSource);
+	$testSource = str_replace("/mnt/user/","",$testSource);
+	$testSource = str_replace("/mnt/disks/","",$testSource);
+	if ( ! $testSource ) {
+		$errors .= "Source cannot be /mnt/user or /mnt/disk<br>";
+	}
+	$testDest = $settings['destinationShare'];
+	foreach ($availableDisks as $disk) {
+		$testDest = str_replace("/mnt/".$disk['name']."/","",$testDest);
+	}
+  $testDest = str_replace("/mnt/user0/","",$testDest);
+	$testDest = str_replace("/mnt/user/","",$testDest);
+	$testDest = str_replace("/mnt/disks/","",$testDest);
+	if ( ! $testDest ) {
+		$errors .= "Destination cannot be /mnt/user or /mnt/disk<br>";
+	}
   if ( $settings['source'] != "" && $settings['source'] == $settings['destinationShare'] ) {
     $errors .= "Source and Destination Cannot Be The Same<br>";
   } else {
@@ -81,11 +101,10 @@ case 'validateBackupOptions':
     }
   }
   if ( ($settings['usbDestination'] == $settings['destinationShare']) || ($settings['xmlDestination'] == $settings['destinationShare']) ) {
-		$errors .= "USB / XML destinations cannot be the same as appdata destination";
+		$errors .= "USB / XML destinations cannot be the same as appdata destination<br>";
 	}
   if ( $settings['usbDestination'] ) {
 		$origUSBDestination = $settings['usbDestination'];
-		$availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
 		$usbDestination = $settings['usbDestination'];
 		foreach ($availableDisks as $disk) {
 			$usbDestination = str_replace("/mnt/".$disk['name']."/","",$usbDestination);
@@ -106,7 +125,6 @@ case 'validateBackupOptions':
   }
 	if ( $settings['xmlDestination'] ) {
 		$origXMLDestination = $settings['xmlDestination'];
-		$availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
 		$xmlDestination = $settings['xmlDestination'];
 		foreach ($availableDisks as $disk) {
 			$xmlDestination = str_replace("/mnt/".$disk['name']."/","",$xmlDestination);

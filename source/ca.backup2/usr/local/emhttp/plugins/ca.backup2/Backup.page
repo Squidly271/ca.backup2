@@ -63,6 +63,9 @@ if ( is_file("/var/log/plugins/ca.update.applications.plg") ) {
 
 $dockerRunning = is_dir("/var/lib/docker/tmp") ? "true" : "false";
 
+if ( ! is_file("/boot/config/plugins/ca.backup2/BackupOptions.json") ) {
+  $firstRun = "true";
+}
 $backupOptions = json_decode(@file_get_contents("/boot/config/plugins/ca.backup2/BackupOptions.json"),true);
 if ( ! isset($backupOptions['cronSetting']) ) {  $backupOptions['cronSetting'] = "disabled"; }
 if ( ! isset($backupOptions['cronDay']) )     {  $backupOptions['cronDay'] = 1; }
@@ -74,9 +77,9 @@ if ( ! isset($backupOptions['destinationShare']) ) { $backupOptions['destination
 if ( ! isset($backupOptions['notification']) ) {  $backupOptions['notification'] = "errors"; }
 if ( ! isset($backupOptions['deleteOldBackup']) ) { $backupOptions['deleteOldBackup'] = "1"; }
 if ( ! isset($backupOptions['updateApps']) ) { $backupOptions['updateApps'] = "no"; }
-if ( ! isset($backupOptions['dockerStopDelay']) ) { $backupOptions['dockerStopDelay'] = 10; }
-if ( ! isset($backupOptions['compression']) ) { $backupOptions['compression'] = 'yes'; }
-if ( ! isset($backupOptions['verify']) ) { $backupOptions['verify'] = "no"; }
+if ( ! isset($backupOptions['dockerStopDelay']) ) { $backupOptions['dockerStopDelay'] = 60; }
+if ( ! isset($backupOptions['compression']) ) { $backupOptions['compression'] = 'no'; }
+if ( ! isset($backupOptions['verify']) ) { $backupOptions['verify'] = "yes"; }
 
 # fix destinationShare for compatibility with initial release
 
@@ -233,6 +236,9 @@ var URL = "/plugins/<?=$plugin?>/include/backupExec.php";
 var appliedChanges = false;
 
 $(function() {
+  if ( "<?=$firstRun?>" == "true" ) {
+	  $("#Backup").prop("disabled",true);
+	}
 	if ( "<?=$v1Installed?>" == "yes" ) {
 		$("#v1Installed").show();
 	}
@@ -394,9 +400,7 @@ function validateOptions(initialization) {
         } else {
           $("#errors").html("false");
           $("#Apply").prop("disabled",true);
-          if ( $('#Backup').attr('data-running') == 'true' ) {
-            $("#Backup").prop("disabled",true);
-          }
+          $("#Backup").prop("disabled",true);
         }          
         $("#errors").html("");
       } else {
