@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2017.11.05">
-<!ENTITY md5       "91110a28b2f8ba5355f1d602a645ea0f">
+<!ENTITY version   "2017.11.23">
+<!ENTITY md5       "2939606af17f0d9bc0cdf65252c69887">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
+###2017.11.23
+- Reorganization as part of updates to CA proper
+
 ###2017.11.05
 - Initial Release
 </CHANGES>
@@ -42,6 +45,8 @@ The 'post-install' script
 mkdir -p /tmp/ca.backup2/tempFiles
 mkdir -p /var/lib/docker/unraid/ca.backup2.datastore
 mkdir -p /boot/config/plugins/ca.backup2/
+rm -rf /usr/local/emhttp/plugins/ca.backup2/CA.page
+rm -rf /usr/local/emhttp/plugins/ca.backup2/caHelp.page
 echo ""
 echo "----------------------------------------------------"
 echo " &name; has been installed."

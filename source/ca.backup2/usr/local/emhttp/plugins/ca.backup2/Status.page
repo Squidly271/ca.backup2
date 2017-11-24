@@ -20,7 +20,8 @@ function checkBackup() {
 }
 </script>
 
-> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+> <center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
+> <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>
 
 <div style='border:1px;border-style:solid;border-color:red;height:200px;overflow:hidden' ><font size='2'>Backup / Restore Status: <span id='backupStatus'></span>
 <br>
@@ -29,7 +30,7 @@ function checkBackup() {
 <input type='button' value='Abort' id='abort' onclick='abort();' disabled>
 
 <div class='tabbedOnly'>
-<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
 <center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
 
 </div>

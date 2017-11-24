@@ -1,5 +1,5 @@
-Menu="CA"
+Menu="Utilities"
 Type="xmenu"
-Title="Backup/Restore v2"
+Title="Backup/Restore Appdata"
 Icon="ca.backup2.png"
 Tabs="true"

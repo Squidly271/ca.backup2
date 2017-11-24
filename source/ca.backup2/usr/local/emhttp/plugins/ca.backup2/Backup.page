@@ -535,7 +535,7 @@ function toggleDockerStop(el) {
 <div id='upgradeAvailable' style='display:none'><center> <font color='red'>An update to CA Appdata Backup / Restore is Available. Click <a href='/Plugins'>HERE</a> to install the update</center></font></div>
 <div id='v1Installed' style='display:none'><center><font color='red'>It is recommended to uninstall CA Appdata Backup / Restore (version 1)</font></center></div>
 
-> For help with this plugin, click here (a new tab will open with the help file)  <strong><font size="2"><a href="Settings/caHelp#backupSettings" target="_blank">HELP</a></font></strong>
+> <center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
 > <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>
 
 <font color='red'><center><span id='errors'></span></font><span id='error1'></span></center>
