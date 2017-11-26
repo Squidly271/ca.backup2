@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2017.11.23">
-<!ENTITY md5       "2939606af17f0d9bc0cdf65252c69887">
+<!ENTITY version   "2017.11.26">
+<!ENTITY md5       "632bf60ce8d4a5aa2babd9afd2ff5f5b">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
+###2017.11.26
+- Fixed: Backup schedule wouldn't run following a reboot of server
+
 ###2017.11.23
 - Reorganization as part of updates to CA proper
 
@@ -47,6 +50,8 @@ mkdir -p /var/lib/docker/unraid/ca.backup2.datastore
 mkdir -p /boot/config/plugins/ca.backup2/
 rm -rf /usr/local/emhttp/plugins/ca.backup2/CA.page
 rm -rf /usr/local/emhttp/plugins/ca.backup2/caHelp.page
+/usr/local/emhttp/plugins/ca.backup2/scripts/removeCron.php
+/usr/local/emhttp/plugins/ca.backup2/scripts/addCron.php
 echo ""
 echo "----------------------------------------------------"
 echo " &name; has been installed."
