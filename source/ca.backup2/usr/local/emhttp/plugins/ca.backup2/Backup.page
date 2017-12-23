@@ -555,7 +555,7 @@ function toggleDockerStop(el) {
 </tr>
 <tr>
   <td><b>Excluded Folders:</b></td>
-  <td><input type='text' class='setting' id='excluded' value='<?=$backupOptions['excluded']?>'></span></td>
+  <td><input type='text' class='setting' id='excluded' value='<?=$backupOptions['excluded']?>' oninput='validateOptions();'></span></td>
   <td><center><b>Excluded Folder Browser</b><br><input type='button' value='Exclude Selected' onclick='setExcluded();'><br></center><div id='excludedFoldersList' style='width:305px;max-height:150px;overflow:scroll;position:absolute;z-index:100;'></div><br><center></td>
  </tr>
 <tr>
