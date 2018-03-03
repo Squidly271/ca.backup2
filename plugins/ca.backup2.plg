@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2017.12.22">
-<!ENTITY md5       "92e7dabff896aa7b1dd3059698c1dd30">
+<!ENTITY version   "2018.03.02">
+<!ENTITY md5       "62d51e81a25014c8962e8078ec525598">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
+###2018.03.02
+- Fixed: PHP Warnings (hidden) in 6.5.0+
+
 ###2017.12.22
 - Fixed: Apply not being activated when using customized excluded folder
 

@@ -280,7 +280,7 @@ if ( ! $restore ) {
 			logger("tar verify returned errors.  Not deleting old backup sets of appdata"); backupLog("tar verify returned errors.  Not deleting old backup sets of appdata");
 			exec("mv ".escapeshellarg($destination)." ".escapeshellarg("$destination-error"));
 		} else {
-			$currentDate = date_create(now);
+			$currentDate = date_create("now");
 			$dirContents = dirContents($basePathBackup);
 			unset($command);
 			foreach ($dirContents as $dir) {
