@@ -127,11 +127,15 @@ if ( ! $restore ) {
       $txt .= "Disk: ".$Disk['name']."  Device: ".$Disk['id']."  Status: ".$Disk['status']."\r\n";
     }
     file_put_contents("/boot/config/DISK_ASSIGNMENTS.txt",$txt);
-    $command = '/usr/bin/rsync '.$backupOptions['rsyncOption'].' --log-file="'.$communityPaths['backupLog'].'" /boot/ "'.$backupOptions['usbDestination'].'" > /dev/null 2>&1';
-    logger("Using command: $command");
-    exec($command);
-    
-    exec("mv '{$backupOptions['usbDestination']}/config/super.dat' '{$backupOptions['usbDestination']}/config/super.dat.CA_BACKUP'");
+		if ( is_dir("/boot") ) {
+			$command = '/usr/bin/rsync '.$backupOptions['rsyncOption'].' --log-file="'.$communityPaths['backupLog'].'" /boot/ "'.$backupOptions['usbDestination'].'" > /dev/null 2>&1';
+		  logger("Using command: $command");
+			exec($command);
+			exec("mv '{$backupOptions['usbDestination']}/config/super.dat' '{$backupOptions['usbDestination']}/config/super.dat.CA_BACKUP'");
+		} else {
+			$missingSource = true;
+			logger("USB not backed up.  Missing source");
+		}
   }
   if ( $backupOptions['xmlDestination'] ) {
     logger("Backing up libvirt.img to {$backupOptions['xmlDestination']}");  backupLog("Backing up libvirt.img");
@@ -161,8 +165,13 @@ $logLine = $restore ? "Restoring " : "Backing Up";
 $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";
 logger("$logLine appData from $source to $destination"); backupLog("$logLine appData from $source to $destination");
 if ( ! $restore ) {
-	$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']}";
-	exec("mkdir -p ".escapeshellarg($destination));
+	if ( is_dir($source) ) {
+		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']}";
+		exec("mkdir -p ".escapeshellarg($destination));
+	} else {
+		logger("Appdata not backed up.  Missing source");
+		$missingSource = true;
+	}
 } else {
 	$command = "cd ".escapeshellarg($restoreDestination)." && /usr/bin/tar -xvaf ".escapeshellarg($restoreFile)." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['restoreProgress']}";
 	exec("mkdir -p ".escapeshellarg($restoreDestination));
@@ -275,7 +284,7 @@ if ( ($backupOptions['notification'] == "always") || ($backupOptions['notificati
 }
 
 if ( ! $restore ) {
-  if ( $backupOptions['deleteOldBackup'] ) {
+  if ( $backupOptions['deleteOldBackup'] && ! $missingSource ) {
 		if ( $returnValue > 0 ) {
 			logger("tar verify returned errors.  Not deleting old backup sets of appdata"); backupLog("tar verify returned errors.  Not deleting old backup sets of appdata");
 			exec("mv ".escapeshellarg($destination)." ".escapeshellarg("$destination-error"));
