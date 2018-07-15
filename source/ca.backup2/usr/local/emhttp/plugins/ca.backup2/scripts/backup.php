@@ -27,6 +27,10 @@ function backupLog($msg) {
   file_put_contents($communityPaths['backupLog'],"$msg\n",FILE_APPEND);
 }
 
+if ( ! is_dir("/mnt/user") ) {
+	logger("It doesn't appear that the array is running.  Exiting CA Backup");
+	exit();
+} 
 $backupOptions = readJsonFile($communityPaths['backupOptions']);
 if ( ! $backupOptions ) {
   @unlink($communityPaths['backupProgress']);
