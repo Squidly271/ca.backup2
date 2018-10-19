@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2018.07.15">
-<!ENTITY md5       "127dba93af4b6cbd1925f9a1aeb29399">
+<!ENTITY version   "2018.10.19">
+<!ENTITY md5       "c74ff72760fc06c669a2fa94458a4c0e">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
+###2018.10.19
+- Fix Broken Pipe
+
 ###2018.07.15
 - Fixed: Don't run a scheduled backup if array isn't started
 
@@ -40,7 +43,7 @@
 <FILE Run="/bin/bash">
 <INLINE>
 # Remove old 'source' files
-rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2>/dev/null|grep -v '&version;')
+rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2>/dev/null &#124; grep -v '&version;')
 </INLINE>
 </FILE>
 
