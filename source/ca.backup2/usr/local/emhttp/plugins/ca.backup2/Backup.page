@@ -529,9 +529,10 @@ function toggleDockerStop(el) {
 <link type="text/css" rel="stylesheet" href="/plugins/ca.backup2/styles/switchbutton.css">
 <style>
 .unRaidDockerButton { left: 11px; }
-.fileTree{width:305px;max-height:150px;overflow:scroll;position:absolute;z-index:100;display:none;}
+.fileTree{width:305px;max-height:150px;overflow:scroll;position:absolute;z-index:100;display:none;color:initial;}
+
 </style>
-<link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.filetree.css">
+<link type="text/css" rel="stylesheet" href="<?autov("/webGui/styles/jquery.filetree.css")?>">
 <div id='upgradeAvailable' style='display:none'><center> <font color='red'>An update to CA Appdata Backup / Restore is Available. Click <a href='/Plugins'>HERE</a> to install the update</center></font></div>
 <div id='v1Installed' style='display:none'><center><font color='red'>It is recommended to uninstall CA Appdata Backup / Restore (version 1)</font></center></div>
 
