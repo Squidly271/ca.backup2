@@ -230,7 +230,7 @@ if ( $dockerRunning == "true" ) {
   $dockerSettings = "<table><tr><td><center><font size='3'>Docker Not Enabled</font></center></td></tr></table>";
 }
 ?>
-<script src="/webGui/javascript/jquery.filetree.js"></script>
+<script src="<?=autov("/webGui/javascript/jquery.filetree.js")?>"></script>
 <script>
 var URL = "/plugins/<?=$plugin?>/include/backupExec.php";
 var appliedChanges = false;
