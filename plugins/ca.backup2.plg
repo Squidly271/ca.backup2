@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2018.11.11a">
-<!ENTITY md5       "8bd1ef13d42172a8834ce7d72442a59b">
+<!ENTITY version   "2018.11.17">
+<!ENTITY md5       "f3a9bf99f67b751d0ff136edcee7da5e">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
+###2018.11.17
+- unRaid 6.6+: Honor autostart rules when restarting containers
+
 ###2018.11.11
 - Add in autov routines
 

@@ -2,7 +2,7 @@
 <?PHP
 ###############################################################
 #                                                             #
-# Community Applications copyright 2015-2017, Andrew Zawadzki #
+# Community Applications copyright 2015-2018, Andrew Zawadzki #
 #                                                             #
 ############################################################### 
 
@@ -109,6 +109,7 @@ if ( is_array($dockerRunning) ) {
   foreach ($dockerRunning as $docker) {
     if ($docker['Running']) {
       if ( $backupOptions['dontStop'][$docker['Name']] ) {
+				$dontRestart[$docker['Name']] = true;
         logger($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");  backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");
         continue;
       }
@@ -198,71 +199,108 @@ if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.updat
   backupLog("Searching for updates to docker applications");
   exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
 }
-if ( is_array($dockerRunning) ) {
-  $autostart = readJsonFile("/boot/config/plugins/ca.docker.autostart/settings.json");
-  foreach ($dockerRunning as $docker) {
-    if ($docker['Running']) {
-      if ( $backupOptions['dontStop'][$docker['Name']] ) {
-        continue;
-      }
-      $autostartIndex = searchArray($autostart,"name",$docker['Name']);
-      if ( $autostartIndex !== false ) {
-        continue;
-      }
-      logger("Restarting ".$docker['Name']); backupLog("Restarting ".$docker['Name']);
-      shell_exec("docker start ".$docker['Name']);
-    }
-  }
-  if ( $autostart ) {
-    $networkINI = parse_ini_file("/usr/local/emhttp/state/network.ini",true);
-    $defaultIP = $networkINI['eth0']['IPADDR:0'];
-    foreach ($autostart as $docker) {
-      $index = searchArray($dockerRunning,"Name",$docker['name']);
-      if ( $index === false ) {
-        continue;
-      }
-      if ( $backupOptions['dontStop'][$docker['name']] ) {
-        continue;
-      }
-      if ( $dockerRunning[$index]['Running'] ) {
-        $delay = $docker['delay'];
-        if ( ! $delay ) {
-          $delay = 0;
-        }
-        $containerName = $docker['name'];
-        $containerDelay = $docker['delay'];
-        $containerPort = $docker['port'];
-        $containerIP = $docker['IP'];
-        if ( ! $containerIP ) {
-          $containerIP = $defaultIP;
-        }
-        if ( ! $containerIP ) {
-          unset($containerPort);
-        }
-        if ( $docker['port'] ) {
-          logger("Restarting $containerName"); backupLog("Restarting $containerName");
-          exec("docker start $containerName");
-          logger("Waiting for port $containerPort to be available before continuing... Timeout of $containerDelay seconds"); backupLog("Waiting for port $containerIP:$containerPort to be available before continuing... Timeout of $containerDelay seconds");
-          for ($time = 0; $time < $containerDelay; $time++) {
-            exec("echo test 2>/dev/null > /dev/tcp/$containerIP/$containerPort",$output,$error);
-            if ( ! $error) {
-              break;
-            }
-            sleep(1);
-          }
-          if ( $error ) {
-            logger("$containerPort still not available.  Carrying on."); backupLog("$containerPort still not available.  Carrying on.");
-          }
-        } else {
-          logger("Sleeping $delay seconds before starting ".$docker['name']); backupLog("Sleeping $delay seconds before starting ".$docker['name']);
-          sleep($delay);
-          logger("Restarting ".$docker['name']); backupLog("Restarting ".$docker['name']);
-          shell_exec("docker start ".$docker['name']);         
-        }
-      }
-    }
-  }
+$unraidVersion = parse_ini_file("/etc/unraid-version");
+if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
+	echo "6.6 version";
+	if ( is_array($dockerRunning) ) {
+		$autostart = file("/var/lib/docker/unraid-autostart");
+		foreach ($autostart as $auto) {
+			$line = explode(" ",$auto);
+			$autostartList[trim($line[0])] = trim($line[1]);
+		}
+		foreach ($dockerRunning as $container) {
+			if ($container['Running'] && ! isset($autostartList[$container['Name']])) {
+				$autostartList[$container['Name']] = 0;
+			}
+		}
+
+		foreach ($autostartList as $docker=>$delay) {
+			$autostartIndex = searchArray($dockerRunning,"Name",$docker);
+			if ( $autostartIndex === false ) {
+				continue;
+			}
+			if ( ! $dockerRunning[$autostartIndex]['Running'] ) {
+				continue;
+			}
+			if ( $dontRestart[$docker] ) {
+				continue;
+			}
+			if ($delay) {
+				backupLog("Waiting $delay seconds before starting $docker");
+				sleep($delay);
+			}
+			backupLog("Starting $docker");
+			shell_exec("docker start ".$docker);
+		}
+	}
+} else {
+	if ( is_array($dockerRunning) ) {
+		$autostart = readJsonFile("/boot/config/plugins/ca.docker.autostart/settings.json");
+		foreach ($dockerRunning as $docker) {
+			if ($docker['Running']) {
+				if ( $backupOptions['dontStop'][$docker['Name']] ) {
+					continue;
+				}
+				$autostartIndex = searchArray($autostart,"name",$docker['Name']);
+				if ( $autostartIndex !== false ) {
+					continue;
+				}
+				logger("Restarting ".$docker['Name']); backupLog("Restarting ".$docker['Name']);
+				shell_exec("docker start ".$docker['Name']);
+			}
+		}
+		if ( $autostart ) {
+			$networkINI = parse_ini_file("/usr/local/emhttp/state/network.ini",true);
+			$defaultIP = $networkINI['eth0']['IPADDR:0'];
+			foreach ($autostart as $docker) {
+				$index = searchArray($dockerRunning,"Name",$docker['name']);
+				if ( $index === false ) {
+					continue;
+				}
+				if ( $backupOptions['dontStop'][$docker['name']] ) {
+					continue;
+				}
+				if ( $dockerRunning[$index]['Running'] ) {
+					$delay = $docker['delay'];
+					if ( ! $delay ) {
+						$delay = 0;
+					}
+					$containerName = $docker['name'];
+					$containerDelay = $docker['delay'];
+					$containerPort = $docker['port'];
+					$containerIP = $docker['IP'];
+					if ( ! $containerIP ) {
+						$containerIP = $defaultIP;
+					}
+					if ( ! $containerIP ) {
+						unset($containerPort);
+					}
+					if ( $docker['port'] ) {
+						logger("Restarting $containerName"); backupLog("Restarting $containerName");
+						exec("docker start $containerName");
+						logger("Waiting for port $containerPort to be available before continuing... Timeout of $containerDelay seconds"); backupLog("Waiting for port $containerIP:$containerPort to be available before continuing... Timeout of $containerDelay seconds");
+						for ($time = 0; $time < $containerDelay; $time++) {
+							exec("echo test 2>/dev/null > /dev/tcp/$containerIP/$containerPort",$output,$error);
+							if ( ! $error) {
+								break;
+							}
+							sleep(1);
+						}
+						if ( $error ) {
+							logger("$containerPort still not available.  Carrying on."); backupLog("$containerPort still not available.  Carrying on.");
+						}
+					} else {
+						logger("Sleeping $delay seconds before starting ".$docker['name']); backupLog("Sleeping $delay seconds before starting ".$docker['name']);
+						sleep($delay);
+						logger("Restarting ".$docker['name']); backupLog("Restarting ".$docker['name']);
+						shell_exec("docker start ".$docker['name']);         
+					}
+				}
+			}
+		}
+	}
 }
+
 if ( $backupOptions['startScript'] ) {
   logger("Executing custom start script ".$backupOptions['startScript']);  backupLog("Executing custom start script");
   shell_exec($backupOptions['startScript']." >> ".$communityPaths['backupLog']);
