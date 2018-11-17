@@ -225,12 +225,13 @@ if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 			if ( $dontRestart[$docker] ) {
 				continue;
 			}
-			if ($delay) {
-				backupLog("Waiting $delay seconds before starting $docker");
-				sleep($delay);
-			}
+
 			backupLog("Starting $docker");
 			shell_exec("docker start ".$docker);
+			if ($delay) {
+				backupLog("Waiting $delay seconds before carrying on");
+				sleep($delay);
+			}
 		}
 	}
 } else {
