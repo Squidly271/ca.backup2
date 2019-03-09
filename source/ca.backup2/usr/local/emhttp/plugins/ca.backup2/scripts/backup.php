@@ -7,11 +7,11 @@
 ############################################################### 
 
 if ( $argv[1] == "restore" ) {
-  $restore = true;
-  $restoreMsg = "Restore";
+	$restore = true;
+	$restoreMsg = "Restore";
 } else {
-  $restore = false;
-  $restoreMsg = "Backup";
+	$restore = false;
+	$restoreMsg = "Backup";
 }
 
 require_once("/usr/local/emhttp/plugins/dynamix.docker.manager/include/DockerClient.php");
@@ -22,9 +22,9 @@ exec("rm -rf ".$communityPaths['backupLog']);
 exec("mkdir -p /var/lib/docker/unraid/ca.backup2.datastore");
 
 function backupLog($msg) {
-  global $communityPaths;
-  
-  file_put_contents($communityPaths['backupLog'],"$msg\n",FILE_APPEND);
+	global $communityPaths;
+	
+	file_put_contents($communityPaths['backupLog'],"$msg\n",FILE_APPEND);
 }
 
 if ( ! is_dir("/mnt/user") ) {
@@ -33,23 +33,23 @@ if ( ! is_dir("/mnt/user") ) {
 } 
 $backupOptions = readJsonFile($communityPaths['backupOptions']);
 if ( ! $backupOptions ) {
-  @unlink($communityPaths['backupProgress']);
-  exit;
+	@unlink($communityPaths['backupProgress']);
+	exit;
 }
 
 if ( is_file($communityPaths['backupProgress']) ) {
-  logger("Backup already in progress.  Aborting");
-  exit;
+	logger("Backup already in progress.  Aborting");
+	exit;
 }
 if ( is_file($communityPaths['restoreProgress']) ) {
-  logger("Restore in progress. Aborting");
-  exit;
+	logger("Restore in progress. Aborting");
+	exit;
 }
 $dockerOptions = parse_ini_file($communityPaths['unRaidDockerSettings'],true);
 $dockerImageFile = basename($dockerOptions['DOCKER_IMAGE_FILE']);
 
 if ( $restore ) {
-  $backupOptions['destinationShare'] = $backupOptions['destinationShare']."/".$argv[2];
+	$backupOptions['destinationShare'] = $backupOptions['destinationShare']."/".$argv[2];
 	if ( is_file($backupOptions['destinationShare']."/CA_backup.tar") ) {
 		$restoreFile = $backupOptions['destinationShare']."/CA_backup.tar";
 	}
@@ -57,7 +57,7 @@ if ( $restore ) {
 		$restoreFile = $backupOptions['destinationShare']."/CA_backup.tar.gz";
 	}
 	$restoreDestination = $backupOptions['source'];
-  if ( ! $restoreFile ) {
+	if ( ! $restoreFile ) {
 		logger("Restore File Not Found.  Aborting");
 		exit;
 	}
@@ -66,11 +66,11 @@ if ( $restore ) {
 $dockerSettings = @my_parse_ini_file($communityPaths['unRaidDockerSettings']);
 
 if ( $restore ) {
-  file_put_contents($communityPaths['restoreProgress'],getmypid());
+	file_put_contents($communityPaths['restoreProgress'],getmypid());
 } else {
-  file_put_contents($communityPaths['backupProgress'],getmypid());
+	file_put_contents($communityPaths['backupProgress'],getmypid());
 }
-  
+	
 $dockerClient = new DockerClient();
 $dockerRunning = $dockerClient->getDockerContainers();
 
@@ -98,40 +98,43 @@ logger("this process.  They will automatically");
 logger("be restarted upon completion.");
 logger('#######################################');
 if ( $backupOptions['notification'] == "always" ) {
-  notify("Community Applications","appData $restoreMsg","$restoreMsg of appData starting.  This may take awhile");
+	notify("Community Applications","appData $restoreMsg","$restoreMsg of appData starting.  This may take awhile");
 }
-  
+	
 if ( $backupOptions['stopScript'] ) {
-  logger("executing custom stop script ".$backupOptions['stopScript']);  backupLog("Executing custom stop script");
-  shell_exec($backupOptions['stopScript']." >> ".$communityPaths['backupLog']);
+	logger("executing custom stop script ".$backupOptions['stopScript']);  backupLog("Executing custom stop script");
+	shell_exec($backupOptions['stopScript']." >> ".$communityPaths['backupLog']);
 }
 if ( is_array($dockerRunning) ) {
-  foreach ($dockerRunning as $docker) {
-    if ($docker['Running']) {
-      if ( $backupOptions['dontStop'][$docker['Name']] ) {
+	foreach ($dockerRunning as $docker) {
+		if ($docker['Running']) {
+			if ( $backupOptions['dontStop'][$docker['Name']] ) {
 				$dontRestart[$docker['Name']] = true;
-        logger($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");  backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");
-        continue;
-      }
-      logger("Stopping ".$docker['Name']); backupLog("Stopping ".$docker['Name']);
-      shell_exec("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
-      logger("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
-    }
-  }
+				logger($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");  backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");
+				continue;
+			}
+			logger("Stopping ".$docker['Name']); backupLog("Stopping ".$docker['Name']);
+			shell_exec("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
+			logger("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
+		}
+	}
 }
 if ( ! $restore ) {
-  $source = $backupOptions['source']."/";
-  $destination = $backupOptions['destinationShare'];
-  
-  if ( $backupOptions['usbDestination'] ) {
-    logger("Backing up USB Flash drive config folder to $usbDestination");  backupLog("Backing up USB Flash Drive");
-    exec("mkdir -p '{$backupOptions['usbDestination']}'");
-    $availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
-    $txt .= "Disk Assignments as of ".date(DATE_RSS)."\r\n";
-    foreach ($availableDisks as $Disk) {
-      $txt .= "Disk: ".$Disk['name']."  Device: ".$Disk['id']."  Status: ".$Disk['status']."\r\n";
-    }
-    file_put_contents("/boot/config/DISK_ASSIGNMENTS.txt",$txt);
+	$source = $backupOptions['source']."/";
+	$destination = $backupOptions['destinationShare'];
+	
+	if ( $backupOptions['usbDestination'] ) {
+		logger("Backing up USB Flash drive config folder to $usbDestination");  backupLog("Backing up USB Flash Drive");
+		exec("mkdir -p '{$backupOptions['usbDestination']}'");
+		$availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
+		$txt .= "Disk Assignments\r\n";
+		foreach ($availableDisks as $Disk) {
+			$txt .= "Disk: ".$Disk['name']."  Device: ".$Disk['id']."  Status: ".$Disk['status']."\r\n";
+		}
+		$oldAssignments = @file_get_contents("/boot/config/DISK_ASSIGNMENTS.txt");
+		if ( $oldAssignments != $txt ) {
+			file_put_contents("/boot/config/DISK_ASSIGNMENTS.txt",$txt);
+		}
 		if ( is_dir("/boot") ) {
 			$command = '/usr/bin/rsync '.$backupOptions['rsyncOption'].' --log-file="'.$communityPaths['backupLog'].'" /boot/ "'.$backupOptions['usbDestination'].'" > /dev/null 2>&1';
 		  logger("Using command: $command");
@@ -141,25 +144,25 @@ if ( ! $restore ) {
 			$missingSource = true;
 			logger("USB not backed up.  Missing source");
 		}
-  }
-  if ( $backupOptions['xmlDestination'] ) {
-    logger("Backing up libvirt.img to {$backupOptions['xmlDestination']}");  backupLog("Backing up libvirt.img");
-    exec("mkdir -p '{$backupOptions['xmlDestination']}'");
-    $domainCFG = @parse_ini_file("/boot/config/domain.cfg");
-    if ( is_file($domainCFG['IMAGE_FILE']) ) {
-      $command = '/usr/bin/rsync '.$backupOptions["rsyncOption"].' --log-file="'.$communityPaths["backupLog"].'" "'.$domainCFG["IMAGE_FILE"].'" "'.$backupOptions['xmlDestination'].'" > /dev/null 2>&1';
+	}
+	if ( $backupOptions['xmlDestination'] ) {
+		logger("Backing up libvirt.img to {$backupOptions['xmlDestination']}");  backupLog("Backing up libvirt.img");
+		exec("mkdir -p '{$backupOptions['xmlDestination']}'");
+		$domainCFG = @parse_ini_file("/boot/config/domain.cfg");
+		if ( is_file($domainCFG['IMAGE_FILE']) ) {
+			$command = '/usr/bin/rsync '.$backupOptions["rsyncOption"].' --log-file="'.$communityPaths["backupLog"].'" "'.$domainCFG["IMAGE_FILE"].'" "'.$backupOptions['xmlDestination'].'" > /dev/null 2>&1';
 			logger("Using Command: $command"); backupLog("Using Command: $command");
-      exec($command);
-    }
-  }
+			exec($command);
+		}
+	}
 }
 
 if ( $backupOptions['excluded'] ) {
-  $exclusions = explode(",",$backupOptions['excluded']);
-  $rsyncExcluded = " ";
-  foreach ($exclusions as $excluded) {
-    $rsyncExcluded .= '--exclude "'.rtrim($excluded,"/").'" ';
-  }
+	$exclusions = explode(",",$backupOptions['excluded']);
+	$rsyncExcluded = " ";
+	foreach ($exclusions as $excluded) {
+		$rsyncExcluded .= '--exclude "'.rtrim($excluded,"/").'" ';
+	}
 	$rsyncExcluded = str_replace($source,"",$rsyncExcluded);
 }
 if ( $dockerImageFile ) {
@@ -196,8 +199,8 @@ if ( $backupOptions['verify'] == "yes" && ! $restore) {
 }
 
 if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.update.applications.plg") ) {
-  backupLog("Searching for updates to docker applications");
-  exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
+	backupLog("Searching for updates to docker applications");
+	exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
 }
 $unraidVersion = parse_ini_file("/etc/unraid-version");
 if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
@@ -303,8 +306,8 @@ if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 }
 
 if ( $backupOptions['startScript'] ) {
-  logger("Executing custom start script ".$backupOptions['startScript']);  backupLog("Executing custom start script");
-  shell_exec($backupOptions['startScript']." >> ".$communityPaths['backupLog']);
+	logger("Executing custom start script ".$backupOptions['startScript']);  backupLog("Executing custom start script");
+	shell_exec($backupOptions['startScript']." >> ".$communityPaths['backupLog']);
 }
 logger('#######################');
 logger("appData $restoreMsg complete");
@@ -312,22 +315,22 @@ logger('#######################');
 
 backupLog("Backup/Restore Complete.  tar Return Value: $returnValue");
 if ( $returnValue > 0 ) {
-  $status = "- Errors occurred";
-  $type = "warning";
+	$status = "- Errors occurred";
+	$type = "warning";
 	$notifyMsg = "Full details in the syslog";
 	foreach (explode("\n",$tarErrors) as $errorLine) {
 		logger($errorLine);
 	}
 } else {
-  $type = "normal";
+	$type = "normal";
 }
 
 if ( ($backupOptions['notification'] == "always") || ($backupOptions['notification'] == "completion") || ( ($backupOptions['notification'] == "errors") && ($type == "warning") )  ) {
-  notify("CA Backup","appData $restoreMsg","$restoreMsg of appData complete $status$logMessage",$notifyMsg,$type);
+	notify("CA Backup","appData $restoreMsg","$restoreMsg of appData complete $status$logMessage",$notifyMsg,$type);
 }
 
 if ( ! $restore ) {
-  if ( $backupOptions['deleteOldBackup'] && ! $missingSource ) {
+	if ( $backupOptions['deleteOldBackup'] && ! $missingSource ) {
 		if ( $returnValue > 0 ) {
 			logger("tar verify returned errors.  Not deleting old backup sets of appdata"); backupLog("tar verify returned errors.  Not deleting old backup sets of appdata");
 			exec("mv ".escapeshellarg($destination)." ".escapeshellarg("$destination-error"));
@@ -350,11 +353,11 @@ if ( ! $restore ) {
 	}
 }
 if ( $restore) {
-  backupLog("Restore finished.  Ideally you should now restart your server");
+	backupLog("Restore finished.  Ideally you should now restart your server");
 }
 
 if ( $returnValue > 0 ) {
-  logger("tar verify errors occurred");
+	logger("tar verify errors occurred");
 }
 @unlink($communityPaths['restoreProgress']);
 @unlink($communityPaths['backupProgress']);

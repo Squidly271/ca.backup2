@@ -22,7 +22,7 @@ function getLineCount($directory) {
 }
 
 $caCredits = "
-    <center><table align:'center'>
+    <center><table align:'center' style='background:initial;'>
       <tr>
         <td><img src='http://www.jrj-socrates.com/Cartoon%20Pics/Misc/Tripping%20The%20Rift/Chode_300.gif' width='50px';height='48px'></td>
         <td><strong>Andrew Zawadzki</strong></td>
