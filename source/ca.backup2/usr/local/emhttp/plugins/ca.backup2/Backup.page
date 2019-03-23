@@ -4,7 +4,7 @@ Title="Backup / Settings"
 <?
 ###############################################################
 #                                                             #
-# Community Applications copyright 2015-2017, Andrew Zawadzki #
+# Community Applications copyright 2015-2019, Andrew Zawadzki #
 #                                                             #
 ###############################################################
 require_once("/usr/local/emhttp/plugins/ca.backup2/include/caCredits.php");
@@ -44,16 +44,6 @@ if ( ! function_exists('my_parse_ini_string') ) {
 }
 
 $plugin = "ca.backup2";
-
-$installedVersion = exec("/usr/local/emhttp/plugins/dynamix.plugin.manager/scripts/plugin version /var/log/plugins/ca.backup2.plg");
-if ( is_file("/tmp/plugins/ca.backup2.plg") ) {
-  $upgradeVersion = exec("/usr/local/emhttp/plugins/dynamix.plugin.manager/scripts/plugin version /tmp/plugins/ca.backup2.plg");
-} else {
-  $upgradeVersion = "0";
-}
-if ( $installedVersion < $upgradeVersion ) {
-  $upgradeAvailable = "true";
-}
 
 $unRaidVersion = parse_ini_file("/etc/unraid-version");
 
@@ -236,6 +226,9 @@ var URL = "/plugins/<?=$plugin?>/include/backupExec.php";
 var appliedChanges = false;
 
 $(function() {
+  if ( typeof caPluginUpdateCheck === "function" ) {
+    caPluginUpdateCheck("ca.backup2.plg",{name:"CA Appdata Backup/Restore"});
+  }
   if ( "<?=$firstRun?>" == "true" ) {
 	  $("#Backup").prop("disabled",true);
 	}
@@ -533,7 +526,6 @@ function toggleDockerStop(el) {
 
 </style>
 <link type="text/css" rel="stylesheet" href="<?autov("/webGui/styles/jquery.filetree.css")?>">
-<div id='upgradeAvailable' style='display:none'><center> <font color='red'>An update to CA Appdata Backup / Restore is Available. Click <a href='/Plugins'>HERE</a> to install the update</center></font></div>
 <div id='v1Installed' style='display:none'><center><font color='red'>It is recommended to uninstall CA Appdata Backup / Restore (version 1)</font></center></div>
 
 > <center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
@@ -708,7 +700,7 @@ Note that it is recommended to also exclude from the backup any associated appda
 <input type='button' value='Apply' id='Apply' onclick='apply();'><input type='button' value='Backup Now' id='Backup' onclick='backupNow();'><span class='statusLines'></span>
 </div><br>
 
-<a href="Settings/caHelp" target='_blank'><i class='fa fa-book'></i> CA Manual</a><a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
+<a style='float:right;cursor:pointer' onclick='showCredits();'>Credits</a><br><br></span>
 <center>For support for this plugin, visit here: <a href="https://forums.lime-technology.com/topic/61211-plugin-ca-appdata-backup-restore-v2/" target="_blank">HERE</a></center>
 
 > <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>
