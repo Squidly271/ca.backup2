@@ -205,7 +205,7 @@ if ( $dockerRunning == "true" ) {
     $dockerSettings .= "<td><div class='ca-switch-button-background skipDocker' style='width:25px; height:11px;'onclick='toggleDockerStop(this);'>";
     $dockerSettings .= "<div class='$class ca-switch-button-button' style='width:12px; height:11px;' data-docker='$container'>";
     $dockerSettings .= "</div></div><br>";
-    $span = $class ? "<span><font color='purple'>Don't Stop</font></span>" : "<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+    $span = $class ? "<span>Don't Stop</span>" : "<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
     $dockerSettings .= "$span</td><td>";
     if ( $column == 2 ) {
       $dockerSettings .= "</td></tr><tr>";
@@ -502,16 +502,16 @@ function showAdvanced() {
   $("#advancedSettings").toggle();
   $("#showAdvanced").toggleClass("advancedHidden");
   if ( $("#showAdvanced").hasClass("advancedHidden") ) {
-    $("#showAdvanced").html("<font color='purple'>Show Advanced Settings</font>");
+    $("#showAdvanced").html("Show Advanced Settings");
   } else {
-    $("#showAdvanced").html("<font color='purple'>Hide Advanced Settings</font>");
+    $("#showAdvanced").html("Hide Advanced Settings");
   }
 }
 
 function toggleDockerStop(el) {
   $(el).find("div").toggleClass("unRaidDockerButton");
     if ( $(el).find("div").hasClass("unRaidDockerButton") ) {
-      $(el).parent().find("span").html("<center><font color='purple'>Don't Stop</font><center>");
+      $(el).parent().find("span").html("<center>Don't Stop<center>");
     } else {
       $(el).parent().find("span").html("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
     }
@@ -685,11 +685,11 @@ function toggleDockerStop(el) {
   <td><input type='text' class='setting' id='cronCustom' onchange='validateOptions();'></input></td>
 </tr>
 </table>
-<center><a onclick='showAdvanced();' style='cursor:pointer'><span id='showAdvanced' class='advancedHidden'><font color='purple'>Show Advanced Settings</font></span></a></center>
+<center><a onclick='showAdvanced();' style='cursor:pointer'><span id='showAdvanced' class='advancedHidden'>Show Advanced Settings</span></a></center>
 <br>
 <span id='advancedSettings' style='display:none'>
 <br>
-<font color='purple' size='2'><b>Select which applications to NOT stop during a backup</b></font><br>
+<font size='2'><b>Select which applications to NOT stop during a backup</b></font><br>
 Note that it is recommended to also exclude from the backup any associated appdata shares from the backup set to ensure that the backup / restore will not fail due to open files, etc</font><br>
 <br><br><br>
 <?=$dockerSettings?>

@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2019.03.23">
-<!ENTITY md5       "fe730fb9eb789e0501805053ccb013b4">
+<!ENTITY version   "2019.09.25">
+<!ENTITY md5       "7625e2030e75338fe8b21e5e319cd71d">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2019.09.25
+- Remove purple text
+
 ###2019.03.23
 - Utilize CA API for update checks
 
