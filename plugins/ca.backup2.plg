@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2019.09.25">
-<!ENTITY md5       "7625e2030e75338fe8b21e5e319cd71d">
+<!ENTITY version   "2019.10.27">
+<!ENTITY md5       "ebae94dbbc578740ceebdce4042b2c53">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2019.10.27
+- Adjust permissions on backup version of flash drive
+
 ###2019.09.25
 - Remove purple text
 

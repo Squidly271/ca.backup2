@@ -140,6 +140,8 @@ if ( ! $restore ) {
 		  logger("Using command: $command");
 			exec($command);
 			exec("mv '{$backupOptions['usbDestination']}/config/super.dat' '{$backupOptions['usbDestination']}/config/super.dat.CA_BACKUP'");
+			logger("Changing permissions on backup");
+			exec("chmod 0777 -R ".escapeshellarg($backupOptions['usbDestination']));
 		} else {
 			$missingSource = true;
 			logger("USB not backed up.  Missing source");
