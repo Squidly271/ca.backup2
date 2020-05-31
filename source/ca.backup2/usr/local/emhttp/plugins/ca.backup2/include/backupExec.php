@@ -91,6 +91,15 @@ case 'validateBackupOptions':
       }
     }
   }
+  if ( $settings['preStartScript'] ) {
+    if ( ! is_file($settings['preStartScript']) ) {
+      $errors .= "No Script at ".$settings['preStartScript']."<br>";
+    } else {
+        if ( ! is_executable($settings['preStartScript']) ) {
+        $errors .= "Pre-start Script ".$settings['preStartScript']." is not executable<br>";
+      }
+    }
+  }
   if ( $settings['startScript'] ) {
     if ( ! is_file($settings['startScript']) ) {
       $errors .= "No Script at ".$settings['startScript']."<br>";

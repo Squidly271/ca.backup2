@@ -204,6 +204,10 @@ if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.updat
 	backupLog("Searching for updates to docker applications");
 	exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
 }
+if ( $backupOptions['preStartScript'] ) {
+	logger("Executing custom pre-start script ".$backupOptions['preStartScript']);  backupLog("Executing custom pre-start script");
+	shell_exec($backupOptions['preStartScript']." >> ".$communityPaths['backupLog']);
+}
 $unraidVersion = parse_ini_file("/etc/unraid-version");
 if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 	echo "6.6 version";
