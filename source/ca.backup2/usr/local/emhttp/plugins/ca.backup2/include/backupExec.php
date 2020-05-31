@@ -1,7 +1,7 @@
 <?PHP
 ###############################################################
 #                                                             #
-# Community Applications copyright 2015-2019, Andrew Zawadzki #
+# Community Applications copyright 2015-2020, Andrew Zawadzki #
 #                                                             #
 ###############################################################
 
@@ -88,6 +88,15 @@ case 'validateBackupOptions':
     } else {
       if ( ! is_executable($settings['stopScript']) ) {
         $errors .= "Stop Script ".$settings['stopScript']." is not executable<br>";
+      }
+    }
+  }
+  if ( $settings['preStartScript'] ) {
+    if ( ! is_file($settings['preStartScript']) ) {
+      $errors .= "No Script at ".$settings['preStartScript']."<br>";
+    } else {
+        if ( ! is_executable($settings['preStartScript']) ) {
+        $errors .= "Pre-start Script ".$settings['preStartScript']." is not executable<br>";
       }
     }
   }

@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2019.10.27">
-<!ENTITY md5       "ebae94dbbc578740ceebdce4042b2c53">
+<!ENTITY version   "2020.05.31">
+<!ENTITY md5       "f1f71ab3cd58d40cf0e89bb672487f82">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2020.05.31
+- Add pre-stop script (Thanks jburnham)
+
 ###2019.10.27
 - Adjust permissions on backup version of flash drive
 
@@ -94,7 +97,7 @@ rm -rf /usr/local/emhttp/plugins/ca.backup2/caHelp.page
 echo ""
 echo "----------------------------------------------------"
 echo " &name; has been installed."
-echo " Copyright 2015-2017, Andrew Zawadzki"
+echo " Copyright 2015-2020, Andrew Zawadzki"
 echo " Version: &version;"
 echo "----------------------------------------------------"
 echo ""

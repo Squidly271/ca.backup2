@@ -4,7 +4,7 @@ Title="Backup / Settings"
 <?
 ###############################################################
 #                                                             #
-# Community Applications copyright 2015-2019, Andrew Zawadzki #
+# Community Applications copyright 2015-2020, Andrew Zawadzki #
 #                                                             #
 ###############################################################
 require_once("/usr/local/emhttp/plugins/ca.backup2/include/caCredits.php");
@@ -255,6 +255,7 @@ $(function() {
   $("#cronCustom").val("<?=$backupOptions['cronCustom']?>");
   $("#runRsync").val("<?=$backupOptions['runRsync']?>");
   $("#dockerIMG").val("<?=$backupOptions['dockerIMG']?>");
+  $("#preStartScript").val("<?=$backupOptions['preStartScript']?>");
   $("#startScript").val("<?=$backupOptions['startScript']?>");
   $("#stopScript").val("<?=$backupOptions['stopScript']?>");
   $("#notification").val("<?=$backupOptions['notification']?>");
@@ -272,7 +273,7 @@ $(function() {
     $("#updateApps").prop("disabled",true);
   }
   
-  $("#destinationShare, #startScript, #stopScript, #usbDestination, #xmlDestination").fileTreeAttach();
+  $("#destinationShare, #preStartScript, #startScript, #stopScript, #usbDestination, #xmlDestination").fileTreeAttach();
 $('#source').fileTreeAttach();
   var source = $("#source").val();
   $("#excludedFoldersList").fileTree({
@@ -589,6 +590,10 @@ function toggleDockerStop(el) {
 <tr>
   <td><b>Path To Custom Stop Script:</b></td>
   <td><input onchange='validateOptions();' class='setting' id='stopScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+</tr>
+<tr>
+  <td><b>Path To Custom Pre-start Script:</b></td>
+  <td><input onchange='validateOptions();' class='setting' id='preStartScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
 </tr>
 <tr>
   <td><b>Path To Custom Start Script:</b></td>

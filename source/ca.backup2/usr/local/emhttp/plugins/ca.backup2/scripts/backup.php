@@ -2,7 +2,7 @@
 <?PHP
 ###############################################################
 #                                                             #
-# Community Applications copyright 2015-2018, Andrew Zawadzki #
+# Community Applications copyright 2015-2020, Andrew Zawadzki #
 #                                                             #
 ############################################################### 
 
@@ -203,6 +203,10 @@ if ( $backupOptions['verify'] == "yes" && ! $restore) {
 if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.update.applications.plg") ) {
 	backupLog("Searching for updates to docker applications");
 	exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
+}
+if ( $backupOptions['preStartScript'] ) {
+	logger("Executing custom pre-start script ".$backupOptions['preStartScript']);  backupLog("Executing custom pre-start script");
+	shell_exec($backupOptions['preStartScript']." >> ".$communityPaths['backupLog']);
 }
 $unraidVersion = parse_ini_file("/etc/unraid-version");
 if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
