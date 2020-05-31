@@ -14,7 +14,7 @@
 
 <CHANGES>
 ###2020.05.31
-- Add pre-stop script (Thanks jburnham)
+- Add pre-start script (Thanks jburnham)
 
 ###2019.10.27
 - Adjust permissions on backup version of flash drive
