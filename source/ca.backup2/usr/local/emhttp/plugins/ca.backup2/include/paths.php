@@ -29,6 +29,7 @@ $communityPaths['addCronScript']                 = "/usr/local/emhttp/plugins/ca
 $communityPaths['unRaidDockerSettings']          = "/boot/config/docker.cfg";
 $communityPaths['unRaidDisks']                   = "/var/local/emhttp/disks.ini";
 $communityPaths['deleteScriptPath']              = $communityPaths['tempFiles']."/deleteScript";
+$communityPaths['tempScript']                    = "{$communityPaths['tempFiles']}/tempScript";
 
 exec("mkdir -p {$communityPaths['tempFiles']}");
 ?>

@@ -86,27 +86,27 @@ case 'validateBackupOptions':
     if ( ! is_file($settings['stopScript']) ) {
       $errors .= "No Script at ".$settings['stopScript']."<br>";
     } else {
-      if ( ! is_executable($settings['stopScript']) ) {
+/*       if ( ! is_executable($settings['stopScript']) ) {
         $errors .= "Stop Script ".$settings['stopScript']." is not executable<br>";
-      }
+      } */
     }
   }
   if ( $settings['preStartScript'] ) {
     if ( ! is_file($settings['preStartScript']) ) {
       $errors .= "No Script at ".$settings['preStartScript']."<br>";
     } else {
-        if ( ! is_executable($settings['preStartScript']) ) {
+/*         if ( ! is_executable($settings['preStartScript']) ) {
         $errors .= "Pre-start Script ".$settings['preStartScript']." is not executable<br>";
-      }
+      } */
     }
   }
   if ( $settings['startScript'] ) {
     if ( ! is_file($settings['startScript']) ) {
       $errors .= "No Script at ".$settings['startScript']."<br>";
     } else {
-        if ( ! is_executable($settings['startScript']) ) {
+/*         if ( ! is_executable($settings['startScript']) ) {
         $errors .= "Start Script ".$settings['startScript']." is not executable<br>";
-      }
+      } */
     }
   }
   if ( ($settings['usbDestination'] == $settings['destinationShare']) || ($settings['xmlDestination'] == $settings['destinationShare']) ) {
@@ -216,7 +216,7 @@ case 'checkBackup':
 			$backupLines .= "
 				<script>$('#backupStatus').html('<font color=red>Running</font> Your docker containers will be automatically restarted at the conclusion of the backup/restore');
 				$('.statusLines').html('<font color=red>Backup / Restore Running');
-				$('#restore').prop('disabled',true);
+				$('#restore').prop('disabled',true).hide();
 				$('#abort').prop('disabled',false);
 				$('#Backup').attr('data-running','true');
 				$('#Backup').prop('disabled',true);

@@ -103,7 +103,9 @@ if ( $backupOptions['notification'] == "always" ) {
 	
 if ( $backupOptions['stopScript'] ) {
 	logger("executing custom stop script ".$backupOptions['stopScript']);  backupLog("Executing custom stop script");
-	shell_exec($backupOptions['stopScript']." >> ".$communityPaths['backupLog']);
+	copy($backupOptions['stopScript'],$communityPaths['tempScript']);
+	chmod($communityPaths['tempScript'],0777);
+	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
 }
 if ( is_array($dockerRunning) ) {
 	foreach ($dockerRunning as $docker) {
@@ -206,7 +208,9 @@ if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.updat
 }
 if ( $backupOptions['preStartScript'] ) {
 	logger("Executing custom pre-start script ".$backupOptions['preStartScript']);  backupLog("Executing custom pre-start script");
-	shell_exec($backupOptions['preStartScript']." >> ".$communityPaths['backupLog']);
+	copy($backupOptions['preStartScript'],$communityPaths['tempScript']);
+	chmod($communityPaths['tempScript'],0777);
+	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
 }
 $unraidVersion = parse_ini_file("/etc/unraid-version");
 if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
@@ -313,7 +317,9 @@ if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 
 if ( $backupOptions['startScript'] ) {
 	logger("Executing custom start script ".$backupOptions['startScript']);  backupLog("Executing custom start script");
-	shell_exec($backupOptions['startScript']." >> ".$communityPaths['backupLog']);
+	copy($backupOptions['startScript'],$communityPaths['tempScript']);
+	chmod($communityPaths['tempScript'],0777);
+	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
 }
 logger('#######################');
 logger("appData $restoreMsg complete");
