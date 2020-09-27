@@ -151,7 +151,7 @@ function logger($string) {
 ###########################################
 
 function notify($event,$subject,$description,$message="",$type="normal") {
-  $command = '/usr/local/emhttp/plugins/dynamix/scripts/notify -e "'.$event.'" -s "'.$subject.'" -d "'.$description.'" -m "'.$message.'" -i "'.$type.'"';
+  $command = '/usr/local/emhttp/plugins/dynamix/scripts/notify -e "'.$event.'" -s "'.$subject.'" -d "'.$description.'" -m "'.$message.'" -i "'.$type.'" -l "/Settings/BackupMainV2"';
   shell_exec($command);
 }
 
