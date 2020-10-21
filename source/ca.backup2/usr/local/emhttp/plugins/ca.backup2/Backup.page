@@ -222,7 +222,7 @@ if ( $dockerRunning == "true" ) {
 ?>
 <script src="<?=autov("/webGui/javascript/jquery.filetree.js")?>"></script>
 <script>
-var URL = "/plugins/<?=$plugin?>/include/backupExec.php";
+var caURL = "/plugins/<?=$plugin?>/include/backupExec.php";
 var appliedChanges = false;
 
 $(function() {
@@ -384,7 +384,7 @@ function validateOptions(initialization) {
   $('#excludedSpan').html(excludeButton);
   $('#excludedFolders').fileTreeAttach();
   
-  $.post(URL,{action:'validateBackupOptions',settings:settings}, function (data) {
+  $.post(caURL,{action:'validateBackupOptions',settings:settings}, function (data) {
     if (data) {
       data = data.trim();
       if ( data == "NONE" ) {
@@ -442,7 +442,7 @@ function apply() {
     function() {
       appliedChanges = false;
 
-      $.post(URL,{action:'applyBackupOptions',settings:settings,dontStop:dontStop});
+      $.post(caURL,{action:'applyBackupOptions',settings:settings,dontStop:dontStop});
 
       validateOptions(true);
       changeRestoreOptions();
@@ -480,7 +480,7 @@ function backupNow() {
     html: true
     },
     function() {
-      $.post(URL,{action:'backupNow'});
+      $.post(caURL,{action:'backupNow'});
     });
 }
 
@@ -492,7 +492,7 @@ function abort() {
     closeOnConfirm: true
     },
     function() {
-      $.post(URL,{action:'abortBackup'});
+      $.post(caURL,{action:'abortBackup'});
     });
 }
 function showCredits() {

@@ -2,14 +2,14 @@ Menu="BackupMainV2:3"
 Title="Restore Appdata"
 ---
 <script>
-var URL = "/plugins/ca.backup2/include/backupExec.php";
+var caURL = "/plugins/ca.backup2/include/backupExec.php";
 
 $(function() {
   changeRestoreOptions();
 });
 
 function changeRestoreOptions() {
-  $.post(URL,{action:'restoreSettings'},function(data) {
+  $.post(caURL,{action:'restoreSettings'},function(data) {
     if (data) {
       $('#restoreScript').html(data);
     }
@@ -37,7 +37,7 @@ function restoreBackup() {
     closeOnConfirm: true
     },
     function() {
-      $.post(URL,{action:'restoreNow',availableDates:availableDates});
+      $.post(caURL,{action:'restoreNow',availableDates:availableDates});
     });
 }
 

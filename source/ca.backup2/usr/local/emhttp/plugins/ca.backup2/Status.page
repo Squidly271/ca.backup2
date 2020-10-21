@@ -3,7 +3,7 @@ Title="Backup / Restore Status"
 ---
 
 <script>
-var URL = "/plugins/ca.backup2/include/backupExec.php";
+var caURL = "/plugins/ca.backup2/include/backupExec.php";
 
 $(function() {
   setInterval(function() {
@@ -12,7 +12,7 @@ $(function() {
 });
 
 function checkBackup() {
-  $.post(URL,{action:'checkBackup'},function(data) {
+  $.post(caURL,{action:'checkBackup'},function(data) {
     if (data) {
       $("#backupLines").html(data);
     }
