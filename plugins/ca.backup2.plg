@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2020.10.21">
-<!ENTITY md5       "311df618a9cb85ff88ea75918292f9f1">
+<!ENTITY version   "2020.12.27">
+<!ENTITY md5       "b1fd12d2fb46ba8d9713c81c72cb78ef">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2020.12.27
+- Fix some permission issues
+
 ###2020.10.21
 - Compatibility Fixes
 

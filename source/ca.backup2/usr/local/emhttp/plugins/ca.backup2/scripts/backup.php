@@ -157,6 +157,8 @@ if ( ! $restore ) {
 			$command = '/usr/bin/rsync '.$backupOptions["rsyncOption"].' --log-file="'.$communityPaths["backupLog"].'" "'.$domainCFG["IMAGE_FILE"].'" "'.$backupOptions['xmlDestination'].'" > /dev/null 2>&1';
 			logger("Using Command: $command"); backupLog("Using Command: $command");
 			exec($command);
+			logger("Changing permissions on backup");
+			exec("chmod 0777 -R ".escapeshellarg($backupOptions['xmlDestination']));
 		}
 	}
 }
@@ -180,6 +182,7 @@ if ( ! $restore ) {
 	if ( is_dir($source) ) {
 		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']}";
 		exec("mkdir -p ".escapeshellarg($destination));
+		exec("chmod 0777 ".escapeshellarg($destination));
 	} else {
 		logger("Appdata not backed up.  Missing source");
 		$missingSource = true;
