@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2021.03.10">
-<!ENTITY md5       "8902c7d4d1067abc0eb290d7f207dc92">
+<!ENTITY version   "2021.03.13">
+<!ENTITY md5       "1d7c72e364b004074d18bf3d960a1737">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2021.03.13
+- Deprecate usb backup (still works though) when running Unraid 6.9
+
 ###2021.03.10
 - Permission Fix
 

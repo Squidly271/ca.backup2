@@ -570,6 +570,9 @@ function toggleDockerStop(el) {
 	</td>
 </tr>
 <tr>
+	<? if ( version_compare($unRaidVersion,"6.9.0-rc35",">=") ):?>
+		<tr><td><h2>NOTE: USB Backup is deprecated on Unraid version 6.9.0  It is advised to use the Unraid.net plugin instead</h2></td></tr>
+	<? endif; ?>
   <td><b>USB Backup Destination:<b><br>If no destination entered, flash drive will not be backed up</td>
   <td><input type='text' class='setting' id="usbDestination" name="usb destination" value="" placeholder='Click To Select A Destination' data-pickfilter="HIDE_FILES_FILTER" data-pickroot="/mnt/" data-pickfolders="true" onchange='validateOptions();'></td>
 </tr>
