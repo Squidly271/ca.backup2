@@ -592,15 +592,15 @@ function toggleDockerStop(el) {
 </tr>
 <tr>
   <td><b>Path To Custom Stop Script:</b></td>
-  <td><input onchange='validateOptions();' class='setting' id='stopScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+  <td><input onchange='validateOptions();' class='setting' id='stopScript' type='text' data-pickroot="/mnt/user/" data-pickfolders="true"></input></td>
 </tr>
 <tr>
   <td><b>Path To Custom Pre-start Script:</b></td>
-  <td><input onchange='validateOptions();' class='setting' id='preStartScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+  <td><input onchange='validateOptions();' class='setting' id='preStartScript' type='text' data-pickroot="/mnt/user/" data-pickfolders="true"></input></td>
 </tr>
 <tr>
   <td><b>Path To Custom Start Script:</b></td>
-  <td><input onchange='validateOptions();' class='setting' id='startScript' type='text' data-pickroot="/" data-pickfolders="true"></input></td>
+  <td><input onchange='validateOptions();' class='setting' id='startScript' type='text' data-pickroot="/mnt/user/" data-pickfolders="true"></input></td>
 </tr>
 <tr>
   <td><b>Update Applications On Restart?</b><br><font size='0'>This option requires CA Auto Update Applications to be installed</font></td>
