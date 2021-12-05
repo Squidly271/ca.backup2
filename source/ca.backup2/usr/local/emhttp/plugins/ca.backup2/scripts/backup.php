@@ -171,9 +171,6 @@ if ( $backupOptions['excluded'] ) {
 	}
 	$rsyncExcluded = str_replace($source,"",$rsyncExcluded);
 }
-if ( $dockerImageFile ) {
-	$rsyncExcluded .= "--exclude '$dockerImageFile' ";
-}
 
 $logLine = $restore ? "Restoring " : "Backing Up";
 $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";

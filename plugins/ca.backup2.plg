@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2021.11.03">
-<!ENTITY md5       "3666e4f13806ca367cd24c838ec4ec21">
+<!ENTITY version   "2021.12.05">
+<!ENTITY md5       "2d9e5887412e5c8d06a200caa724a176">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2021.12.05
+- Don't exclude the docker image file since it's now extremely rare for it to be placed within appdata
+
 ###2021.11.03
 - Fixed: File picker for start / stop scripts wasn't working
 
