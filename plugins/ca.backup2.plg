@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2021.12.05">
-<!ENTITY md5       "2d9e5887412e5c8d06a200caa724a176">
+<!ENTITY version   "2022.07.23">
+<!ENTITY md5       "5a0d167433ea9e0331f92c03418d5f0a">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2022.07.23
+- Set permissions on backups to be 0777
+
 ###2021.12.05
 - Don't exclude the docker image file since it's now extremely rare for it to be placed within appdata
 

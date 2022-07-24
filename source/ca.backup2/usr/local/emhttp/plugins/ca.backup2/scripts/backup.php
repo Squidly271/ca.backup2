@@ -190,6 +190,9 @@ if ( ! $restore ) {
 }
 logger('Using command: '.$command); backupLog("Executing tar: $command");
 exec($command);
+if ( ! $restore )
+	exec("chmod 0777 ".escapeshellarg("{$destination}/CA_backup$fileExt"));
+
 logger("$restoreMsg Complete");
 if ( $backupOptions['verify'] == "yes" && ! $restore) {
 	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." > {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']}";
