@@ -4,7 +4,7 @@
 #                                                             #
 # Community Applications copyright 2015-2020, Andrew Zawadzki #
 #                                                             #
-############################################################### 
+###############################################################
 
 if ( $argv[1] == "restore" ) {
 	$restore = true;
@@ -18,13 +18,20 @@ require_once("/usr/local/emhttp/plugins/dynamix.docker.manager/include/DockerCli
 require_once("/usr/local/emhttp/plugins/ca.backup2/include/paths.php");
 require_once("/usr/local/emhttp/plugins/ca.backup2/include/helpers.php");
 
+/** @var $communityPaths array */
+
 exec("rm -rf ".$communityPaths['backupLog']);
 exec("mkdir -p /var/lib/docker/unraid/ca.backup2.datastore");
 
+/**
+ * Logs a message to the Backup Log (the one shown at "Backup / Restore status"
+ * @param $msg string The Text to be logged
+ * @return void
+ */
 function backupLog($msg) {
 	global $communityPaths;
 	
-	file_put_contents($communityPaths['backupLog'],"$msg\n",FILE_APPEND);
+	file_put_contents($communityPaths['backupLog'],"[".date("d.m.Y H:i:s")."] $msg\n",FILE_APPEND);
 }
 
 if ( ! is_dir("/mnt/user") ) {
@@ -62,7 +69,7 @@ if ( $restore ) {
 		exit;
 	}
 }
-@unlink($communityPaths['backupLog']);
+
 $dockerSettings = @my_parse_ini_file($communityPaths['unRaidDockerSettings']);
 
 if ( $restore ) {
@@ -195,7 +202,7 @@ if ( ! $restore )
 
 logger("$restoreMsg Complete");
 if ( $backupOptions['verify'] == "yes" && ! $restore) {
-	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." > {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']}";
+	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." >> {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']}";
 	logger("Verifying backup"); backupLog("Verifying Backup");
 	logger("Using command: $command"); backupLog("Using command: $command");
 	exec($command,$out,$returnValue);
