@@ -177,7 +177,7 @@ $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";
 logger("$logLine appData from $source to $destination"); backupLog("$logLine appData from $source to $destination");
 if ( ! $restore ) {
 	if ( is_dir($source) ) {
-		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']}";
+		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
 		exec("mkdir -p ".escapeshellarg($destination));
 		exec("chmod 0777 ".escapeshellarg($destination));
 	} else {
@@ -185,24 +185,29 @@ if ( ! $restore ) {
 		$missingSource = true;
 	}
 } else {
-	$command = "cd ".escapeshellarg($restoreDestination)." && /usr/bin/tar -xvaf ".escapeshellarg($restoreFile)." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['restoreProgress']}";
+	$command = "cd ".escapeshellarg($restoreDestination)." && /usr/bin/tar -xvaf ".escapeshellarg($restoreFile)." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['restoreProgress']} && wait $!";
 	exec("mkdir -p ".escapeshellarg($restoreDestination));
 }
 logger('Using command: '.$command); backupLog("Executing tar: $command");
-exec($command);
-if ( ! $restore )
-	exec("chmod 0777 ".escapeshellarg("{$destination}/CA_backup$fileExt"));
+exec($command,$out,$returnValue);
+if ( $returnValue > 0 )	{
+        logger("tar creation failed!"); backupLog("tar creation failed!");
+        $tarErrors = file_get_contents($communityPaths['backupLog']);
+    } else {
+    if (!$restore)
+        exec("chmod 0777 " . escapeshellarg("{$destination}/CA_backup$fileExt"));
 
-logger("$restoreMsg Complete");
-if ( $backupOptions['verify'] == "yes" && ! $restore) {
-	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." > {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']}";
-	logger("Verifying backup"); backupLog("Verifying Backup");
-	logger("Using command: $command"); backupLog("Using command: $command");
-	exec($command,$out,$returnValue);
-	unlink($communityPaths['verifyProgress']);
-	if ( $returnValue > 0 )	{
-		$tarErrors = file_get_contents($communityPaths['backupLog']);
-	}
+    logger("$restoreMsg Complete");
+    if ($backupOptions['verify'] == "yes" && !$restore) {
+        $command = "cd " . escapeshellarg("$source") . " && /usr/bin/tar --diff -C '$source' -af " . escapeshellarg("$destination/CA_backup$fileExt") . " > {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']} && wait $!";
+        logger("Verifying backup"); backupLog("Verifying Backup");
+        logger("Using command: $command"); backupLog("Using command: $command");
+        exec($command, $out, $returnValue);
+        unlink($communityPaths['verifyProgress']);
+        if ($returnValue > 0) {
+            $tarErrors = file_get_contents($communityPaths['backupLog']);
+        }
+    }
 }
 
 if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.update.applications.plg") ) {
