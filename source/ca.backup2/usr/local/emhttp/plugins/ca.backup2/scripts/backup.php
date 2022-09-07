@@ -107,6 +107,8 @@ logger('#######################################');
 if ( $backupOptions['notification'] == "always" ) {
 	notify("Community Applications","appData $restoreMsg","$restoreMsg of appData starting.  This may take awhile");
 }
+
+backupLog("$restoreMsg of appData starting. This may take awhile");
 	
 if ( $backupOptions['stopScript'] ) {
 	logger("executing custom stop script ".$backupOptions['stopScript']);  backupLog("Executing custom stop script");
@@ -202,7 +204,7 @@ if ( ! $restore )
 
 logger("$restoreMsg Complete");
 if ( $backupOptions['verify'] == "yes" && ! $restore) {
-	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." >> {$communityPaths['backupLog']} & echo $! > {$communityPaths['verifyProgress']}";
+	$command = "cd ".escapeshellarg("$source")." && /usr/bin/tar --diff -C '$source' -af ".escapeshellarg("$destination/CA_backup$fileExt")." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['verifyProgress']}";
 	logger("Verifying backup"); backupLog("Verifying Backup");
 	logger("Using command: $command"); backupLog("Using command: $command");
 	exec($command,$out,$returnValue);

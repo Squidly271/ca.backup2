@@ -193,12 +193,22 @@ case 'applyBackupOptions':
 
 case 'checkBackup':
   if ( is_file($communityPaths['backupLog']) ) {
-    $backupLines = "<font size='0'><tt>".shell_exec("tail -n10 ".$communityPaths['backupLog'])."</tt></font>";
+    $backupLines = "<font size='0'><tt>".file_get_contents($communityPaths['backupLog'])."</tt></font>";
     $backupLines = str_replace("\n","<br>",$backupLines);
   } else {
-    $backupLines = "<br><br><br>";
+    $backupLines = "(No log currently existing)";
   }
+
+  $scroll = false;
+  $scrollJs = <<<JS
+$('#backupLines').animate({
+  scrollTop: $('#backupLines')[0].scrollHeight - $('#backupLines')[0].clientHeight
+}, 100);
+JS;
+
+
 	if ( is_file($communityPaths['verifyProgress']) ) {
+        $scroll = true;
 		$backupLines .= "
       <script>$('#backupStatus').html('<font color=red>Verifying</font> Your docker containers will be automatically restarted at the conclusion of the backup/restore');
       $('.statusLines').html('<font color=red>Verifying');
@@ -213,6 +223,7 @@ case 'checkBackup':
       </script>";
 	} else {
 		if ( is_file($communityPaths['backupProgress']) || is_file($communityPaths['restoreProgress']) ) {
+            $scroll = true;
 			$backupLines .= "
 				<script>$('#backupStatus').html('<font color=red>Running</font> Your docker containers will be automatically restarted at the conclusion of the backup/restore');
 				$('.statusLines').html('<font color=red>Backup / Restore Running');
@@ -232,6 +243,10 @@ case 'checkBackup':
 			$('.statusLines').html('');
 			$('#abort').prop('disabled',true);
 			$('.miscScripts').prop('disabled',false);
+            // Check if backup was previously running to let the div scroll one more time
+            if($('#Backup').attr('data-running') === 'true') {
+                $scrollJs
+            }
 			$('#Backup').attr('data-running','false');
 			if ( appliedChanges == false ) {
 				$('#Backup').prop('disabled',false);
@@ -248,6 +263,15 @@ case 'checkBackup':
       }
       </script>";
    }
+
+  if($scroll) {
+      $backupLines .= "
+<script>
+$scrollJs
+</script>
+";
+
+  }
 
 
   echo $backupLines;
