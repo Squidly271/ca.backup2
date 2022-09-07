@@ -180,10 +180,7 @@ for ( $minute = 0; $minute < 60; $minute++ ) {
 }
 
 for ( $hour = 0; $hour < 24; $hour++ ) {
-  if ( $hour > 11 ) { $suffix = "PM"; $easyHour = $hour - 12; } else { $suffix = "AM"; $easyHour = $hour; }
-  if ( $easyHour == 0 ) { $easyHour = 12; }
-
-  $cronHour .= "<option value='$hour'>$easyHour$suffix</option>";
+  $cronHour .= "<option value='$hour'>$hour</option>";
 }
 
 if ( $dockerRunning == "true" ) {
