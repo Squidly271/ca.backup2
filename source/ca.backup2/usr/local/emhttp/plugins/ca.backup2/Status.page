@@ -24,8 +24,7 @@ function checkBackup() {
 > <center><a href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7M7CBCVU732XG' target='_blank'><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></a></center>
 
 <font size='2'>Backup / Restore Status: <span id='backupStatus'></span></font>
-<div style='border:1px;border-style:solid;border-color:red;height:300px;overflow:auto' id='backupLines' >
-<span id='backupLinesas'><br><br><br></span></div>
+<div style='border:1px;border-style:solid;border-color:red;height:300px;overflow:auto' id='backupLines' ></div>
 
 <input type='button' value='Abort' id='abort' onclick='abort();' disabled>
 
