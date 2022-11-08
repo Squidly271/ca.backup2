@@ -28,10 +28,10 @@ exec("mkdir -p /var/lib/docker/unraid/ca.backup2.datastore");
  * @param $msg string The Text to be logged
  * @return void
  */
-function backupLog($msg) {
+function backupLog($msg, $newLine = true, $skipDate = false) {
 	global $communityPaths;
 	
-	file_put_contents($communityPaths['backupLog'],"[".date("d.m.Y H:i:s")."] $msg\n",FILE_APPEND);
+	file_put_contents($communityPaths['backupLog'],($skipDate ? '' :"[".date("d.m.Y H:i:s")."]")." $msg".($newLine ? "\n" : ''),FILE_APPEND);
 }
 
 if ( ! is_dir("/mnt/user") ) {
@@ -117,6 +117,7 @@ if ( $backupOptions['stopScript'] ) {
 	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
 }
 if ( is_array($dockerRunning) ) {
+    $stopTimer = 0;
 	foreach ($dockerRunning as $docker) {
 		if ($docker['Running']) {
 			if ( $backupOptions['dontStop'][$docker['Name']] ) {
@@ -124,9 +125,13 @@ if ( is_array($dockerRunning) ) {
 				logger($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");  backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");
 				continue;
 			}
-			logger("Stopping ".$docker['Name']); backupLog("Stopping ".$docker['Name']);
+			logger("Stopping ".$docker['Name']); backupLog("Stopping ".$docker['Name']."... ", false);
+            $stopTimer = time();
 			shell_exec("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
 			logger("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
+
+            backupLog("done (took ".(time()-$stopTimer)." seconds)", true, true);
+
 		}
 	}
 }
@@ -186,7 +191,7 @@ $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";
 logger("$logLine appData from $source to $destination"); backupLog("$logLine appData from $source to $destination");
 if ( ! $restore ) {
 	if ( is_dir($source) ) {
-		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -cvaf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
+		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -caf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
 		exec("mkdir -p ".escapeshellarg($destination));
 		exec("chmod 0777 ".escapeshellarg($destination));
 	} else {
