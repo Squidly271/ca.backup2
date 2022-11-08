@@ -70,6 +70,7 @@ if ( ! isset($backupOptions['updateApps']) ) { $backupOptions['updateApps'] = "n
 if ( ! isset($backupOptions['dockerStopDelay']) ) { $backupOptions['dockerStopDelay'] = 60; }
 if ( ! isset($backupOptions['compression']) ) { $backupOptions['compression'] = 'no'; }
 if ( ! isset($backupOptions['verify']) ) { $backupOptions['verify'] = "yes"; }
+if ( ! isset($backupOptions['hideDockerWarning']) ) { $backupOptions['hideDockerWarning'] = "no"; }
 
 # fix destinationShare for compatibility with initial release
 
@@ -238,8 +239,11 @@ $(function() {
   <?if (! $tabbed):?>
   $(".tabbedOnly").hide();
   <?endif;?>
+
+  <?php if($backupOptions['hideDockerWarning'] == 'no'):?>
   myAlert("Appdata Backup","When a Backup is running (<em>either manually or a scheduled backup</em>), your docker applications will be <b><font color='red'>stopped</font></b> and then <b><font color='red'>restarted</font></b> at the conclusion of the backup","","",false,"",true,"warning");
-  
+  <?php endif; ?>
+
   $("#source").val("<?=$backupOptions['source']?>");
   $("#fasterRsync").val("<?=$backupOptions['fasterRsync']?>");
   $("#deleteOldBackup").val("<?=$backupOptions['deleteOldBackup']?>");
@@ -265,6 +269,7 @@ $(function() {
   $("#dockerStopDelay").val("<?=$backupOptions['dockerStopDelay']?>");
 	$("#compression").val("<?=$backupOptions['compression']?>");
 	$("#verify").val("<?=$backupOptions['verify']?>");
+	$("#hideDockerWarning").val("<?=$backupOptions['hideDockerWarning']?>");
   
   if ( "<?=$caUpdateInstalled?>" != "true" ) {
     $("#updateApps").prop("disabled",true);
@@ -693,6 +698,16 @@ function toggleDockerStop(el) {
 <center><a onclick='showAdvanced();' style='cursor:pointer'><span id='showAdvanced' class='advancedHidden'>Show Advanced Settings</span></a></center>
 <br>
 <span id='advancedSettings' style='display:none'>
+<br>
+<table>
+    <tr>
+        <td><b>Hide the docker warning message when opening CA.Backup settings</b></td>
+        <td><select class='setting' id='hideDockerWarning' onchange='validateOptions();'>
+            		<option value='no'>No</option>
+            		<option value='yes'>Yes</option>
+            		</select></td>
+    </tr>
+</table>
 <br>
 <font size='2'><b>Select which applications to NOT stop during a backup</b></font><br>
 Note that it is recommended to also exclude from the backup any associated appdata shares from the backup set to ensure that the backup / restore will not fail due to open files, etc</font><br>
