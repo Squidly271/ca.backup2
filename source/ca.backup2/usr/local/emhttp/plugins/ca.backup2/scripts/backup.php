@@ -175,8 +175,11 @@ if ( ! $restore ) {
 if ( $backupOptions['excluded'] ) {
 	$exclusions = explode(",",$backupOptions['excluded']);
 	$rsyncExcluded = " ";
+    $excludedFoldersArray = [];
 	foreach ($exclusions as $excluded) {
-		$rsyncExcluded .= '--exclude "'.rtrim($excluded,"/").'" ';
+        $trimmed = rtrim($excluded,"/");
+		$rsyncExcluded .= '--exclude "'.$trimmed.'" ';
+        $excludedFoldersArray[] = array_reverse(explode('/', $trimmed))[0];
 	}
 	$rsyncExcluded = str_replace($source,"",$rsyncExcluded);
 }
@@ -196,8 +199,8 @@ if ( ! $restore ) {
             backupLog("Separate archives enabled!");
             $commands = [];
             foreach(scandir($source) as $srcFolderEntry) {
-                if(in_array($srcFolderEntry, ['.', '..'])) {
-                    // Ignore . and ..
+                if(in_array($srcFolderEntry, array_merge($excludedFoldersArray, ['.', '..']))) {
+                    // Ignore . and .. and excluded folders
                     continue;
                 }
                 $commands[$srcFolderEntry] = "cd ".escapeshellarg($source)." && /usr/bin/tar -caf ".escapeshellarg("{$destination}/CA_backup_$srcFolderEntry$fileExt")." $srcFolderEntry >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
@@ -256,7 +259,7 @@ foreach ($commands as $folderName => $command) {
         logger("$restoreMsg Complete");
         if ($backupOptions['verify'] == "yes" && !$restore) {
             $command = "cd " . escapeshellarg("$source") . " && /usr/bin/tar --diff -C '$source' -af " . escapeshellarg("$destination/CA_backup".(empty($folderName) ? '' : '_')."$folderName$fileExt") . " >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['verifyProgress']} && wait $!";
-            logger("Verifying backup $folderName"); backupLog("Verifying Backup $folderName - $command");
+            logger("Verifying backup $folderName"); backupLog("Verifying Backup $folderName");
             logger("Using command: $command");
             exec($command, $out, $returnValue);
             unlink($communityPaths['verifyProgress']);
