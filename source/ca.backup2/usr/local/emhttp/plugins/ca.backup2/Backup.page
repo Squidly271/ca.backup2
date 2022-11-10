@@ -71,6 +71,7 @@ if ( ! isset($backupOptions['dockerStopDelay']) ) { $backupOptions['dockerStopDe
 if ( ! isset($backupOptions['compression']) ) { $backupOptions['compression'] = 'no'; }
 if ( ! isset($backupOptions['verify']) ) { $backupOptions['verify'] = "yes"; }
 if ( ! isset($backupOptions['hideDockerWarning']) ) { $backupOptions['hideDockerWarning'] = "no"; }
+if ( ! isset($backupOptions['separateArchives']) ) { $backupOptions['separateArchives'] = "no"; }
 
 # fix destinationShare for compatibility with initial release
 
@@ -270,7 +271,8 @@ $(function() {
 	$("#compression").val("<?=$backupOptions['compression']?>");
 	$("#verify").val("<?=$backupOptions['verify']?>");
 	$("#hideDockerWarning").val("<?=$backupOptions['hideDockerWarning']?>");
-  
+	$("#separateArchives").val("<?=$backupOptions['separateArchives']?>");
+
   if ( "<?=$caUpdateInstalled?>" != "true" ) {
     $("#updateApps").prop("disabled",true);
   }
@@ -566,6 +568,14 @@ function toggleDockerStop(el) {
 <tr>
 	<td><b>Verify Backups?</b></td>
 	<td><select class='setting' id='verify' onchange='validateOptions();'>
+		<option value='no'>No</option>
+		<option value='yes'>Yes</option>
+	</select>
+	</td>
+</tr>
+<tr>
+	<td><b>Create separate archives (one per folder)?</b></td>
+	<td><select class='setting' id='separateArchives' onchange='validateOptions();'>
 		<option value='no'>No</option>
 		<option value='yes'>Yes</option>
 	</select>

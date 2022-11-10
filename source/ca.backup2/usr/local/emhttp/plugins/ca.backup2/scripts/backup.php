@@ -56,18 +56,13 @@ $dockerOptions = parse_ini_file($communityPaths['unRaidDockerSettings'],true);
 $dockerImageFile = basename($dockerOptions['DOCKER_IMAGE_FILE']);
 
 if ( $restore ) {
-	$backupOptions['destinationShare'] = $backupOptions['destinationShare']."/".$argv[2];
-	if ( is_file($backupOptions['destinationShare']."/CA_backup.tar") ) {
-		$restoreFile = $backupOptions['destinationShare']."/CA_backup.tar";
-	}
-	if ( is_file($backupOptions['destinationShare']."/CA_backup.tar.gz") ) {
-		$restoreFile = $backupOptions['destinationShare']."/CA_backup.tar.gz";
-	}
-	$restoreDestination = $backupOptions['source'];
-	if ( ! $restoreFile ) {
-		logger("Restore File Not Found.  Aborting");
-		exit;
-	}
+    $restoreSource = $backupOptions['destinationShare']."/".$argv[2].'/';
+    $restoreDestination = $backupOptions['source'];
+
+    if(!file_exists($restoreSource)) {
+        logger("Restore source is missing! Aborting!"); backupLog("Restore source is missing! Aborting!");
+        exit;
+    }
 }
 
 $dockerSettings = @my_parse_ini_file($communityPaths['unRaidDockerSettings']);
@@ -186,43 +181,95 @@ if ( $backupOptions['excluded'] ) {
 	$rsyncExcluded = str_replace($source,"",$rsyncExcluded);
 }
 
-$logLine = $restore ? "Restoring " : "Backing Up";
+$logLine = $restore ? "Restoring" : "Backing Up";
 $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";
 logger("$logLine appData from $source to $destination"); backupLog("$logLine appData from $source to $destination");
+
 if ( ! $restore ) {
 	if ( is_dir($source) ) {
-		$command = "cd ".escapeshellarg($source)." && /usr/bin/tar -caf ".escapeshellarg("{$destination}/CA_backup$fileExt")." $rsyncExcluded * >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
-		exec("mkdir -p ".escapeshellarg($destination));
-		exec("chmod 0777 ".escapeshellarg($destination));
+
+        // Prepare destination.
+        exec("mkdir -p ".escapeshellarg($destination));
+        exec("chmod 0777 ".escapeshellarg($destination));
+
+        if($backupOptions['separateArchives'] == 'yes') {
+            backupLog("Separate archives enabled!");
+            $commands = [];
+            foreach(scandir($source) as $srcFolderEntry) {
+                if(in_array($srcFolderEntry, ['.', '..'])) {
+                    // Ignore . and ..
+                    continue;
+                }
+                $commands[$srcFolderEntry] = "cd ".escapeshellarg($source)." && /usr/bin/tar -caf ".escapeshellarg("{$destination}/CA_backup_$srcFolderEntry$fileExt")." $srcFolderEntry >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
+            }
+        } else {
+            backupLog("Separate archives disabled! Saving into one file.");
+            $command = "cd " . escapeshellarg($source) . " && /usr/bin/tar -caf " . escapeshellarg("{$destination}/CA_backup$fileExt") . " $rsyncExcluded . >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['backupProgress']} && wait $!";
+        }
+
 	} else {
 		logger("Appdata not backed up.  Missing source");
 		$missingSource = true;
 	}
-} else {
-	$command = "cd ".escapeshellarg($restoreDestination)." && /usr/bin/tar -xvaf ".escapeshellarg($restoreFile)." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['restoreProgress']} && wait $!";
-	exec("mkdir -p ".escapeshellarg($restoreDestination));
+} else { // Restore
+    $restoreItems = scandir($restoreSource);
+    $commands = [];
+    if(!$restoreItems) {
+        logger("No restore items, aborting..."); backupLog("No restore items, aborting...");
+        exit;
+    }
+
+    exec("mkdir -p ".escapeshellarg($restoreDestination));
+
+    foreach ($restoreItems as $item) {
+        if(in_array($item, ['.', '..'])) {
+            // Ignore . and ..
+            continue;
+        }
+        $commands[$item] = "cd ".escapeshellarg($restoreDestination)." && /usr/bin/tar -xaf ".escapeshellarg($restoreSource.$item)." >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['restoreProgress']} && wait $!";
+    }
 }
-logger('Using command: '.$command); backupLog("Executing tar: $command");
-exec($command,$out,$returnValue);
-if ( $returnValue > 0 )	{
+
+if(!isset($commands)) {
+    $commands = ['' => $command];
+}
+
+$returnValue = 0; // remove
+
+foreach ($commands as $folderName => $command) {
+    logger('Using command: '.$command);
+    if(!empty($folderName)) {
+        backupLog("$logLine: $folderName");
+    } else {
+        backupLog("$logLine");
+    }
+
+    exec($command,$out,$returnValue);
+
+    if ( $returnValue > 0 )	{
         logger("tar creation failed!"); backupLog("tar creation failed!");
         $tarErrors = file_get_contents($communityPaths['backupLog']);
     } else {
-    if (!$restore)
-        exec("chmod 0777 " . escapeshellarg("{$destination}/CA_backup$fileExt"));
+        if (!$restore)
+            exec("chmod 0777 " . escapeshellarg("{$destination}/CA_backup$folderName$fileExt"));
 
-    logger("$restoreMsg Complete");
-    if ($backupOptions['verify'] == "yes" && !$restore) {
-        $command = "cd " . escapeshellarg("$source") . " && /usr/bin/tar --diff -C '$source' -af " . escapeshellarg("$destination/CA_backup$fileExt") . " >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['verifyProgress']} && wait $!";
-        logger("Verifying backup"); backupLog("Verifying Backup");
-        logger("Using command: $command"); backupLog("Using command: $command");
-        exec($command, $out, $returnValue);
-        unlink($communityPaths['verifyProgress']);
-        if ($returnValue > 0) {
-            $tarErrors = file_get_contents($communityPaths['backupLog']);
+        logger("$restoreMsg Complete");
+        if ($backupOptions['verify'] == "yes" && !$restore) {
+            $command = "cd " . escapeshellarg("$source") . " && /usr/bin/tar --diff -C '$source' -af " . escapeshellarg("$destination/CA_backup".(empty($folderName) ? '' : '_')."$folderName$fileExt") . " >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['verifyProgress']} && wait $!";
+            logger("Verifying backup $folderName"); backupLog("Verifying Backup $folderName - $command");
+            logger("Using command: $command");
+            exec($command, $out, $returnValue);
+            unlink($communityPaths['verifyProgress']);
+            if ($returnValue > 0) {
+                backupLog("tar verify failed!");
+                $tarErrors = file_get_contents($communityPaths['backupLog']);
+            }
         }
     }
 }
+
+backupLog("done");
+
 
 if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.update.applications.plg") ) {
 	backupLog("Searching for updates to docker applications");

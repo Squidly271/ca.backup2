@@ -18,7 +18,7 @@ function getDates() {
     return "No Backup Sets Found";
   }
   foreach ($availableDates as $date) {
-		if ( is_file("{$backupOptions['destinationShare']}/$date/CA_backup.tar") || is_file("{$backupOptions['destinationShare']}/$date/CA_backup.tar.gz") ) {
+		if (strpos($date, 'error') === false ) {
 			$output .= '<option value="'.$date.'">'.$date.'</option>';
 		}
   }
