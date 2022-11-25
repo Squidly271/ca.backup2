@@ -23,6 +23,8 @@ require_once("/usr/local/emhttp/plugins/ca.backup2/include/helpers.php");
 exec("rm -rf ".$communityPaths['backupLog']);
 exec("mkdir -p /var/lib/docker/unraid/ca.backup2.datastore");
 
+$errorOccured = false;
+
 /**
  * Logs a message to the Backup Log (the one shown at "Backup / Restore status"
  * @param $msg string The Text to be logged
@@ -30,7 +32,8 @@ exec("mkdir -p /var/lib/docker/unraid/ca.backup2.datastore");
  */
 function backupLog($msg, $newLine = true, $skipDate = false) {
 	global $communityPaths;
-	
+
+    logger($msg);
 	file_put_contents($communityPaths['backupLog'],($skipDate ? '' :"[".date("d.m.Y H:i:s")."]")." $msg".($newLine ? "\n" : ''),FILE_APPEND);
 }
 
@@ -60,7 +63,7 @@ if ( $restore ) {
     $restoreDestination = $backupOptions['source'];
 
     if(!file_exists($restoreSource)) {
-        logger("Restore source is missing! Aborting!"); backupLog("Restore source is missing! Aborting!");
+        backupLog("Restore source is missing! Aborting!");
         exit;
     }
 }
@@ -106,7 +109,7 @@ if ( $backupOptions['notification'] == "always" ) {
 backupLog("$restoreMsg of appData starting. This may take awhile");
 
 if ( $backupOptions['stopScript'] ) {
-	logger("executing custom stop script ".$backupOptions['stopScript']);  backupLog("Executing custom stop script");
+	backupLog("executing custom stop script ".$backupOptions['stopScript']);
 	copy($backupOptions['stopScript'],$communityPaths['tempScript']);
 	chmod($communityPaths['tempScript'],0777);
 	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
@@ -117,15 +120,16 @@ if ( is_array($dockerRunning) ) {
 		if ($docker['Running']) {
 			if ( $backupOptions['dontStop'][$docker['Name']] ) {
 				$dontRestart[$docker['Name']] = true;
-				logger($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");  backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings.  Skipping");
+				backupLog($docker['Name']." set to not be stopped by ca backup's advanced settings. Skipping");
 				continue;
 			}
-			logger("Stopping ".$docker['Name']); backupLog("Stopping ".$docker['Name']."... ", false);
+			backupLog("Stopping ".$docker['Name']."... ", false);
             $stopTimer = time();
-			shell_exec("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
-			logger("docker stop -t {$backupOptions['dockerStopDelay']} {$docker['Name']}");
-
-            backupLog("done (took ".(time()-$stopTimer)." seconds)", true, true);
+            if($dockerClient->stopContainer($docker['Name']) != 1) {
+                backupLog("Error while stopping container!", true, true);
+            } else {
+                backupLog("done (took " . (time() - $stopTimer) . " seconds)", true, true);
+            }
 
 		}
 	}
@@ -133,9 +137,10 @@ if ( is_array($dockerRunning) ) {
 if ( ! $restore ) {
 	$source = $backupOptions['source']."/";
 	$destination = $backupOptions['destinationShare'];
+    $txt = "";
 	
 	if ( $backupOptions['usbDestination'] ) {
-		logger("Backing up USB Flash drive config folder to $usbDestination");  backupLog("Backing up USB Flash Drive");
+		backupLog("Backing up USB Flash drive config folder to {$backupOptions['usbDestination']}");
 		exec("mkdir -p '{$backupOptions['usbDestination']}'");
 		$availableDisks = my_parse_ini_file("/var/local/emhttp/disks.ini",true);
 		$txt .= "Disk Assignments\r\n";
@@ -159,7 +164,7 @@ if ( ! $restore ) {
 		}
 	}
 	if ( $backupOptions['xmlDestination'] ) {
-		logger("Backing up libvirt.img to {$backupOptions['xmlDestination']}");  backupLog("Backing up libvirt.img");
+		backupLog("Backing up libvirt.img to {$backupOptions['xmlDestination']}");
 		exec("mkdir -p '{$backupOptions['xmlDestination']}'");
 		$domainCFG = @parse_ini_file("/boot/config/domain.cfg");
 		if ( is_file($domainCFG['IMAGE_FILE']) ) {
@@ -172,10 +177,11 @@ if ( ! $restore ) {
 	}
 }
 
+$excludedFoldersArray = [];
+
 if ( $backupOptions['excluded'] ) {
 	$exclusions = explode(",",$backupOptions['excluded']);
 	$rsyncExcluded = " ";
-    $excludedFoldersArray = [];
 	foreach ($exclusions as $excluded) {
         $trimmed = rtrim($excluded,"/");
 		$rsyncExcluded .= '--exclude "'.$trimmed.'" ';
@@ -186,7 +192,7 @@ if ( $backupOptions['excluded'] ) {
 
 $logLine = $restore ? "Restoring" : "Backing Up";
 $fileExt = ($backupOptions['compression']) == "yes" ? ".tar.gz" : ".tar";
-logger("$logLine appData from $source to $destination"); backupLog("$logLine appData from $source to $destination");
+backupLog("$logLine appData from $source to $destination");
 
 if ( ! $restore ) {
 	if ( is_dir($source) ) {
@@ -199,7 +205,8 @@ if ( ! $restore ) {
             backupLog("Separate archives enabled!");
             $commands = [];
             foreach(scandir($source) as $srcFolderEntry) {
-                if(in_array($srcFolderEntry, array_merge($excludedFoldersArray, ['.', '..']))) {
+                if(in_array($srcFolderEntry, array_merge(['.', '..'], $excludedFoldersArray))) {
+                    backupLog("Ignoring: ".$srcFolderEntry);
                     // Ignore . and .. and excluded folders
                     continue;
                 }
@@ -211,14 +218,14 @@ if ( ! $restore ) {
         }
 
 	} else {
-		logger("Appdata not backed up.  Missing source");
+		backupLog("Appdata not backed up. Missing source");
 		$missingSource = true;
 	}
 } else { // Restore
     $restoreItems = scandir($restoreSource);
     $commands = [];
     if(!$restoreItems) {
-        logger("No restore items, aborting..."); backupLog("No restore items, aborting...");
+        backupLog("No restore items, aborting...");
         exit;
     }
 
@@ -237,8 +244,6 @@ if(!isset($commands)) {
     $commands = ['' => $command];
 }
 
-$returnValue = 0; // remove
-
 foreach ($commands as $folderName => $command) {
     logger('Using command: '.$command);
     if(!empty($folderName)) {
@@ -250,8 +255,8 @@ foreach ($commands as $folderName => $command) {
     exec($command,$out,$returnValue);
 
     if ( $returnValue > 0 )	{
-        logger("tar creation failed!"); backupLog("tar creation failed!");
-        $tarErrors = file_get_contents($communityPaths['backupLog']);
+        backupLog("tar creation failed!");
+        $errorOccured = true;
     } else {
         if (!$restore)
             exec("chmod 0777 " . escapeshellarg("{$destination}/CA_backup$folderName$fileExt"));
@@ -259,13 +264,13 @@ foreach ($commands as $folderName => $command) {
         logger("$restoreMsg Complete");
         if ($backupOptions['verify'] == "yes" && !$restore) {
             $command = "cd " . escapeshellarg("$source") . " && /usr/bin/tar --diff -C '$source' -af " . escapeshellarg("$destination/CA_backup".(empty($folderName) ? '' : '_')."$folderName$fileExt") . " >> {$communityPaths['backupLog']} 2>&1 & echo $! > {$communityPaths['verifyProgress']} && wait $!";
-            logger("Verifying backup $folderName"); backupLog("Verifying Backup $folderName");
+            backupLog("Verifying Backup $folderName");
             logger("Using command: $command");
             exec($command, $out, $returnValue);
             unlink($communityPaths['verifyProgress']);
-            if ($returnValue > 0) {
+            if ($returnValue > 0) { // Todo: Being overwritten!!
                 backupLog("tar verify failed!");
-                $tarErrors = file_get_contents($communityPaths['backupLog']);
+                $errorOccured = true;
             }
         }
     }
@@ -279,7 +284,7 @@ if ( $backupOptions['updateApps'] == "yes" && is_file("/var/log/plugins/ca.updat
 	exec("/usr/local/emhttp/plugins/ca.update.applications/scripts/updateDocker.php");
 }
 if ( $backupOptions['preStartScript'] ) {
-	logger("Executing custom pre-start script ".$backupOptions['preStartScript']);  backupLog("Executing custom pre-start script");
+	backupLog("Executing custom pre-start script ".$backupOptions['preStartScript']);
 	copy($backupOptions['preStartScript'],$communityPaths['tempScript']);
 	chmod($communityPaths['tempScript'],0777);
 	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
@@ -312,7 +317,9 @@ if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 			}
 
 			backupLog("Starting $docker");
-			shell_exec("docker start ".$docker);
+            if($dockerClient->startContainer($docker) != 1) {
+                backupLog("Error while starting container!");
+            }
 			if ($delay) {
 				backupLog("Waiting $delay seconds before carrying on");
 				sleep($delay);
@@ -388,7 +395,7 @@ if ( version_compare($unraidVersion["version"],"6.5.3",">") ){
 }
 
 if ( $backupOptions['startScript'] ) {
-	logger("Executing custom start script ".$backupOptions['startScript']);  backupLog("Executing custom start script");
+	backupLog("Executing custom start script ".$backupOptions['startScript']);
 	copy($backupOptions['startScript'],$communityPaths['tempScript']);
 	chmod($communityPaths['tempScript'],0777);
 	shell_exec($communityPaths['tempScript']." >> ".$communityPaths['backupLog']);
@@ -397,26 +404,23 @@ logger('#######################');
 logger("appData $restoreMsg complete");
 logger('#######################');
 
-backupLog("Backup/Restore Complete.  tar Return Value: $returnValue");
-if ( $returnValue > 0 ) {
+backupLog("Backup/Restore Complete.");
+if ( $errorOccured ) {
 	$status = "- Errors occurred";
 	$type = "warning";
-	$notifyMsg = "Full details in the syslog";
-	foreach (explode("\n",$tarErrors) as $errorLine) {
-		logger($errorLine);
-	}
+	$notifyMsg = "Full details in the syslog or inside the log file at backup destination";
 } else {
 	$type = "normal";
 }
 
 if ( ($backupOptions['notification'] == "always") || ($backupOptions['notification'] == "completion") || ( ($backupOptions['notification'] == "errors") && ($type == "warning") )  ) {
-	notify("CA Backup","appData $restoreMsg","$restoreMsg of appData complete $status$logMessage",$notifyMsg,$type);
+	notify("CA Backup","appData $restoreMsg","$restoreMsg of appData complete $status",$notifyMsg,$type);
 }
 
 if ( ! $restore ) {
 	if ( $backupOptions['deleteOldBackup'] && ! $missingSource ) {
-		if ( $returnValue > 0 ) {
-			logger("tar verify returned errors.  Not deleting old backup sets of appdata"); backupLog("tar verify returned errors.  Not deleting old backup sets of appdata");
+		if ( $errorOccured) {
+			backupLog("tar verify returned errors. Not deleting old backup sets of appdata");
 			exec("mv ".escapeshellarg($destination)." ".escapeshellarg("$destination-error"));
 		} else {
 			$currentDate = date_create("now");
@@ -429,7 +433,7 @@ if ( ! $restore ) {
 				$interval = date_diff($currentDate,$folderDate);
 				$age = $interval->format("%R%a");
 				if ( $age <= (0 - $backupOptions['deleteOldBackup']) ) {
-					logger("Deleting $basePathBackup/$dir"); backupLog("Deleting Dated Backup set: $basePathBackup/$dir");
+					backupLog("Deleting Dated Backup set: $basePathBackup/$dir");
 					exec("rm -rf ".escapeshellarg("$basePathBackup/$dir"));
 				}   
 			}
@@ -440,12 +444,14 @@ if ( $restore) {
 	backupLog("Restore finished.  Ideally you should now restart your server");
 }
 
-if ( $returnValue > 0 ) {
-	logger("tar verify errors occurred");
-}
 @unlink($communityPaths['restoreProgress']);
 @unlink($communityPaths['backupProgress']);
 
-backupLog("Backup / Restore Completed"); logger("Backup / Restore Completed");
+backupLog("Backup / Restore Completed");
+
+if(!$restore) {
+    // Copy this log to its backup dir
+    copy($communityPaths['backupLog'], $destination.'/backup.log');
+}
 
 ?>
