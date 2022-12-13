@@ -228,6 +228,7 @@ var appliedChanges = false;
 $(function() {
   if ( typeof caPluginUpdateCheck === "function" ) {
     caPluginUpdateCheck("ca.backup2.plg",{name:"CA Appdata Backup/Restore"});
+		addBannerWarning("This plugin has been deprecated.  Advised to install the version from KluthR instead",true,true);
   }
   if ( "<?=$firstRun?>" == "true" ) {
 	  $("#Backup").prop("disabled",true);

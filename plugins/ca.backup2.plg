@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "ca.backup2">
 <!ENTITY author    "Andrew Zawadzki">
-<!ENTITY version   "2022.07.23">
-<!ENTITY md5       "5a0d167433ea9e0331f92c03418d5f0a">
+<!ENTITY version   "2022.12.13">
+<!ENTITY md5       "267e436df05273932e23f75c6fd5cadb">
 <!ENTITY launch    "Settings/BackupMainV2">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "Squidly271/ca.backup2">
@@ -13,6 +13,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="shield">
 
 <CHANGES>
+###2022.12.13
+- Add deprecation banner
+
 ###2022.07.23
 - Set permissions on backups to be 0777
 
